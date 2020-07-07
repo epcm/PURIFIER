@@ -47,26 +47,26 @@ class weapon(Actor):
         # 近战武器
         if self.type == 1:
             #clock.schedule_interval(animate_chop, 1)
-            #for mon in monsters:
-            if hero.distance_to(monster) < self.distance:
-                ang = hero.angle_to(monster)
-                if ((step == 4 and -60 <ang < 60) or 
-                (step == 5 and (120 <ang < 180 or -180< ang < -120)) or 
-                (step == 6 and 30 <ang < 150) or 
-                (step == 7 and -150 <ang < -30)):
-                    global monster_HP, speed_x, speed_y
-                    monster_HP.CurrentHP -= self.damage
-                    if step == 4:
-                        monster.x += standard_speed*10
-                    elif step == 5:
-                        monster.x -= standard_speed*10
-                    elif step == 6:
-                        monster.y -= standard_speed*10
-                    elif step == 7:
-                        monster.y += standard_speed*10
-                    global beaten
-                    animate_shake(monster)
-                    beaten = True
+            for monster in monsters:
+                if hero.distance_to(monster) < self.distance:
+                    ang = hero.angle_to(monster)
+                    if ((step == 4 and -60 <ang < 60) or 
+                    (step == 5 and (120 <ang < 180 or -180< ang < -120)) or 
+                    (step == 6 and 30 <ang < 150) or 
+                    (step == 7 and -150 <ang < -30)):
+                        global monster_HP, speed_x, speed_y
+                        monster_HP.CurrentHP -= self.damage
+                        if step == 4:
+                            monster.x += standard_speed*10
+                        elif step == 5:
+                            monster.x -= standard_speed*10
+                        elif step == 6:
+                            monster.y -= standard_speed*10
+                        elif step == 7:
+                            monster.y += standard_speed*10
+                        global beaten
+                        animate_shake(monster)
+                        beaten = True
         
         # 远程武器
         elif self.type == 2:

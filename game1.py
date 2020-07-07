@@ -200,10 +200,12 @@ def draw_hp_bar():
     global step
     if (prince_HP.isdead()):
         step = 3
-    HPBar = Rect((20, 20), (200, 35))  #血槽
+    #screen.blit('hp_bar', (20, 20))
+    HP_bar = Rect((20, 20), (200, 35))  #血槽
     CurrentHPBar = Rect(
-        (20, 20), (200 * prince_HP.CurrentHP / prince_HP.FullHP, 33))  #当前血量
-    screen.draw.rect(HPBar, 'black')
+        (183, 20), (165 *(prince_HP.CurrentHP / prince_HP.FullHP) , 13))  #当前血量
+    #CurrentHPBar.right = 183+20
+    screen.draw.rect(HP_bar, 'black')
     screen.draw.filled_rect(CurrentHPBar, 'black')
     #########
     MonsterBar = Rect((100, 300), (200, 35))
@@ -314,6 +316,7 @@ def on_key_up(key):
 
 def update():
     global step, hero, speed_x, speed_y, game, check
+    prince_HP.CurrentHP -= 0.5
     # 往右走
     if game:
         if keyboard.D:
