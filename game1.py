@@ -35,13 +35,13 @@ red_dino = monster('red_dino', 10)
 green_din = monster('green_din', 10)
 red_din = monster('red_din', 10)
 
-class weapon(Actor):
-    def __init__(self, image, type, distance, damage, price):
-        super().__init__(image)
+
+class weapon():
+    def __init__(self, type, distance, damage):
         self.type = type # 1为近战武器，2为远程武器
         self.distance = distance
         self.damage = damage
-        self.price = price
+        self.image_name = ''
     
     def attack(self, pos):
         # 近战武器
@@ -71,19 +71,21 @@ class weapon(Actor):
         # 远程武器
         elif self.type == 2:
             b = bullet(self.distance, self.damage, hero.angle_to(pos))
-            b.pos = hero.pos
+            b.actor.pos = hero.pos
             bullets.append(b)
 
-class bullet(Actor):
-    def __init__(self, distance, damage, ang):
-        super().__init__('子弹特效1')
+class bullet():
+    def __init__(self,distance, damage, ang):
         self.damage = damage
         self.distance = distance
-        self.angle = ang
+        self.actor = Actor('子弹特效1')
+        self.actor.angle = ang
         self.speed_x = standard_speed ** 1.5 *math.cos(math.radians(ang))
         self.speed_y = -standard_speed ** 1.5 *math.sin(math.radians(ang))
         self.count_time = 0 #计时工具
 
+def on_mouse_down(pos):
+    current_weapon.attack(pos)
 
 # 怪兽shake
 def animate_shake(monster):
@@ -115,41 +117,9 @@ def recover():
 
 
 bullets = []
-
-
-# 武器模块
-#image, type, distance, damage, price
-fuzi = weapon("斧子", 1, 100, 1, 2)
-gong1 = weapon("弓1", 2, 300, 2, 1)
-gong2 = weapon("弓2_trans", 2, 500, 3, 2)
-jian1= weapon("剑1_trans", 1, 100, 1, 2)
-jian2 = weapon("剑2_trans", 1, 100, 1, 2)
-qiang1 = weapon("枪1_trans", 2, 100, 1, 2)
-qiang2 = weapon("枪2_trans", 2, 100, 1, 2)
-changmao1 = weapon("长矛1_trans", 1, 100, 1, 2)
-changmao2 = weapon("长矛2_trans", 1, 100, 1, 2)
-fuzi.pos = (370,240)
-gong1.pos = (405,240)
-gong2.pos = (445,240)
-jian1.pos = (480,240)
-jian2.pos = (520,240)
-qiang1.pos = (560,240)
-qiang2.pos = (590,240)
-changmao1.pos = (630,240)
-changmao2.pos = (370,280)
-
-#背包与武器槽模块
-weapon_bar = Actor('weapon_bar')
-weapons_on_bar = [fuzi, gong1]
-weapon_bar.pos = 300, 40
-bag = Actor('背包')
-bag.pos = 500,300
-bag_weapons = [fuzi, gong1]
-bag_open = False
-
-weapons = [fuzi, gong1, gong2, jian1, jian2, qiang1, qiang2, changmao1, changmao2]
+weapons = [weapon(2, 300, 1), weapon(1, 300, 2)]
+current_weapon = weapon(1, 300, 1)
 current_weapon_id = 0
-current_weapon = weapons_on_bar[current_weapon_id]
 
 
 # 测试用怪兽血条
@@ -172,7 +142,8 @@ monster = Actor("red_din")
 start = False
 game = False
 
-# 箱子部分
+coins = 0
+
 n = 3
 box = Actor('box_close')
 box1 = Actor('box_close')
@@ -189,9 +160,16 @@ for i in range(4):
     b = random.randint(150, 600)
     boxes[i].x = a
     boxes[i].y = b
+
+
 WIDTH = background1.width + 100
 HEIGHT = background1.height + 300
 step = 99
+
+monster.x = WIDTH / 2
+monster.y = HEIGHT / 2
+
+
 class Boxing:
     for i in range(4):
             boxes[i].open = False
@@ -213,19 +191,6 @@ def open_box():
         number = random.randint(20, 40)
         coins += number
 
-coins = 10
-step_store = 0
-step_store1 = 0
-
-
-WIDTH = background1.width + 100
-HEIGHT = background1.height + 100
-step = 99
-
-monster.x = WIDTH / 2
-monster.y = HEIGHT / 2
-
-
 def game_over():
     pass
 
@@ -240,7 +205,7 @@ def draw_hp_bar():
         (20, 20), (200 * prince_HP.CurrentHP / prince_HP.FullHP, 33))  #当前血量
     screen.draw.rect(HPBar, 'black')
     screen.draw.filled_rect(CurrentHPBar, 'black')
- #########
+    #########
     MonsterBar = Rect((100, 300), (200, 35))
     MonsterCurrentBar = Rect(
         (100, 20), (200 * monster_HP.CurrentHP / monster_HP.FullHP, 33))
@@ -250,16 +215,16 @@ def draw_hp_bar():
 # 画金币
 def draw_coins_bar():
     screen.blit('gloden', (20, 60))  #20,60
-    screen.draw.text(str(coins), (125, 77), fontsize=50, color = 'black')  #125 77
+    screen.draw.text(str(coins), (125, 77), fontsize=50)  #125 77
 
 
 ### 上下左右行走模块函数 ###
 def left_movement():
-    hero.image = f"prince_left_{current_weapon.image}"
+    hero.image = "prince_left"
 
 
 def right_movement():
-    hero.image = f"prince_right_{current_weapon.image}"
+    hero.image = "prince_right"
 
 
 def up_movement():
@@ -267,7 +232,7 @@ def up_movement():
 
 
 def down_movement():
-    hero.image = f"prince_{current_weapon.image}"
+    hero.image = "prince"
 
 
 ####################
@@ -300,128 +265,33 @@ def draw():
             screen.clear()
             screen.fill('white')
             screen.draw.text("You have lose your game, please exit!", (200, 200), fontsize=50, color="orange")
-            clock.schedule(exit, 3)
-
-    ### 上下左右移动模块 ####
-    if step == 4 or step == 5 or step == 6 or step == 7:
-        background1.draw()
-        monster.draw()
-        for i in range(3):
+            exit()
+        ### 上下左右移动模块 ####
+        if step == 4 or step == 5 or step == 6 or step == 7:
+            background1.draw()
+            monster.draw()
             for i in range(4):
                 boxes[i].draw()
-        send.draw()
+            send.draw()
+            # 优先级最高
+            hero.draw()
+            # HP、金币状态绘制
+            draw_hp_bar()
+            draw_coins_bar()
 
+            # 子弹绘制
+            for i in bullets:
+                i.actor.draw()
 
-        # 优先级最高
-        hero.draw()
-        #HP、金币状态绘制
-        draw_hp_bar()
-        draw_coins_bar()
-        # 子弹绘制
-        for i in bullets:
-            i.draw()
-        if step == 4:
-            clock.schedule(right_movement, 0.01)
-        if step == 5:
-            clock.schedule(left_movement, 0.01)
-        if step == 6:
-            clock.schedule(up_movement, 0.01)
-        if step == 7:
-            clock.schedule(down_movement, 0.01)
-        
-        #背包与武器槽绘制
-        weapon_bar.draw()
-        screen.blit(weapons_on_bar[0].image, (265, 26))
-        screen.blit(weapons_on_bar[1].image, (303, 26))
-        if bag_open:
-            bag.draw()
-            bag.pos = (500,300)
-            for w in weapons:
-                w.draw()
+            if step == 4:
+                clock.schedule(right_movement, 0.01)
+            if step == 5:
+                clock.schedule(left_movement, 0.01)
+            if step == 6:
+                clock.schedule(up_movement, 0.01)
+            if step == 7:
+                clock.schedule(down_movement, 0.01)
     #################################
-    #商店图表绘制
-    store_button.draw()
-    store_button.pos=(WIDTH-50,HEIGHT-50)
-    if step_store == 1:
-        store_inner.draw()
-        store_inner.pos = (500,300)
-        for w in weapons:
-            w.draw()
-        fuzi.pos = (370,240)
-        gong1.pos = (405,240)
-        gong2.pos = (445,240)
-        jian1.pos = (480,240)
-        jian2.pos = (520,240)
-        qiang1.pos = (560,240)
-        qiang2.pos = (590,240)
-        changmao1.pos = (630,240)
-        changmao2.pos = (370,280)
-    #购买点击图标
-    x1,y1 = 450,200
-    x2,y2 = 500,300
-
-    if step_store in range(2,11) and not bag_open:
-        Pur_button.draw()
-        Pur_button.pos = (x2,y2)
-        screen.draw.text("Price: %d "%weapons[step_store-2].price,(x1,y1),fontsize=50,color = "black")
-
-    if step_store1 == 20:
-        screen.draw.text("Your coins are not ENOUGH!",(300,400),fontsize=50,color = "red")
-
-    #################################
-
-#武器商店模块
-store_button = Actor("store_button")
-store_inner = Actor("store")
-# weapon = {fuzi1:(2,2), gong1:(1,3), gong2:(2,4), jian1:(1,5), jian2:(3,6), qiang1:(2,7), qiang2:(4,8), changmao1:(2,9), changmao2:(3,10)}
-Pur_button = Actor("purchase")
-
-
-def on_mouse_down(pos, button):
-    global coins
-    global step_store, bag_open, current_weapon, current_weapon_id, weapons_on_bar
-    if button == mouse.RIGHT:
-        step_store = 12
-        bag_open = False
-    else:
-        if weapon_bar.collidepoint(pos):
-            bag_open = True
-        if store_button.collidepoint(pos):
-            step_store = 1
-        else:
-            if not step_store in range(1, 11) and not bag_open:
-                current_weapon.attack(pos)
-            else:
-                global weapons
-                count = 2 #标识第几个武器
-                for i in weapons:
-                    if i.collidepoint(pos):
-                        step_store = count
-                        if i in bag_weapons:
-                            weapons_on_bar[current_weapon_id] = i
-                            current_weapon = weapons_on_bar[current_weapon_id]
-                            current_weapon_id = (current_weapon_id+1)%2
-                    count += 1
-                if Pur_button.collidepoint(pos) and not bag_open:
-                    purchase_judge(step_store)
-
-def purchase_judge(n):
-    global coins, step_store1, step_store
-    if coins < weapons[step_store - 2].price:
-        step_store1 = 20
-        clock.schedule(reset_step_store1, 2)
-    else:
-        key = weapons[step_store - 2]
-        key.image = f'{key.image[:-6]}'#将半透明图像替换为不透明图像
-        coins = coins - weapons[step_store - 2].price
-        bag_weapons.append(key)
-        step_store = 1
-
-# 用于clock.schedule调用，清除金钱不够的信息
-def reset_step_store1():
-    global step_store1
-    step_store1 = 0
-#################################################
 
 def on_key_down(key):
     global step
@@ -439,7 +309,8 @@ def on_key_up(key):
     global current_weapon_id, current_weapon
     if key == keys.Q:
         current_weapon_id = (1 + current_weapon_id) % 2
-        current_weapon = weapons_on_bar[current_weapon_id]
+        current_weapon = weapons[current_weapon_id]
+        print(current_weapon_id)
 
 def update():
     global step, hero, speed_x, speed_y, game, check
@@ -465,28 +336,35 @@ def update():
                 hero.y = HEIGHT - 30
             hero.y += 5
             step = 7
-
-
         #####子弹更新模块#####
         for i in bullets:
-            i.x += i.speed_x
-            i.y += i.speed_y
+            i.actor.x += i.speed_x
+            i.actor.y += i.speed_y
             i.count_time += 1
-            if(i.count_time >= i.distance/standard_speed**1.5):
+            if (i.count_time >= i.distance / standard_speed ** 1.5):
                 bullets.remove(i)
-            if monster.colliderect(i):
+            if monster.colliderect(i.actor):
                 global monster_HP
                 monster_HP.CurrentHP -= i.damage
                 bullets.remove(i)
                 tone.play('A1', 0.1)
                 animate_shake(monster)
         if monster_HP.isdead():
-            monster.x =-50
+            monster.x = -50
             monster.y = -50
+
+
+
         ##### 怪兽自己走模块 #####
         # monster.pos = random.randint(0, WIDTH), random.randint(0, HEIGHT)
 
-        #靠近至一定距离时怪兽主动接近
+
+        if hero.distance_to(monster) <= 5:
+            prince_HP.CurrentHP -= 5
+
+
+
+        # 靠近至一定距离时怪兽主动接近
         if not beaten:
             if monster.distance_to(hero) < 200:
                 '''#if random.randint(1,6) == 1:
@@ -510,9 +388,9 @@ def update():
                 speed_y = standard_speed
 
             else:
-                #平均2s一次的随机转向
+                # 平均2s一次的随机转向
                 if random.randint(1, 120) == 1:
-                    #ang = random.randint(-180, 180)
+                    # ang = random.randint(-180, 180)
                     ang = random.choice([0, 45, 90, 135, 180, 225, 270, 315])
                     speed_x = standard_speed ** 1.5 * math.cos(math.radians(ang))
                     speed_x = -standard_speed ** 1.5 * math.sin(math.radians(ang))
@@ -523,22 +401,39 @@ def update():
             speed_x *= -1
         if HEIGHT <= monster.y or monster.y <= 0:
             speed_y *= -1
-        
+
         # 画箱子函数
         for j in range(0, 4):
             if hero.colliderect(boxes[j]) and boxes[j].open == False:
                 check = j
                 boxes[j].image = 'box_open'
                 clock.schedule_unique(open_box, 0.1)
+'''
+#如果第一关没死光
+second_mission = False
+if second_mission and hero.pos = 700, 500:
+    #如果没杀光，第三、四关都不可以
+    background2 = Actor('ba2')
+    background2.draw()
+    thrid_mission, final_mission = False, False
+    #杀光后就是通过
+    third_mission = True
+if third_mission and hero.pos = 700, 500:
+    # 如果没死光,最后一关不可以
+    background3 = Actor('ba3')
+    background3.draw()
+    final_mission = False
+    #杀光后就进入Boss关卡
+    final_mission = True
+if final_mission and hero.pos = 700, 500:
+    # 如果没死光
+    background4 = Actor('ba4')
+    background4.draw()
+    # 死光后进入结束语
+'''
 
-    #### 简单的四边跑 ######
-    if hero.colliderect(monster):
-        pass
-        #tone.play('G2', 0.5)
-        #prince_HP.CurrentHP -= 0.05
-    for i in range(3):
-        if hero.colliderect(boxes[i]):
-            boxes[i].image = 'box_open'
+
+
 
 
 pgzrun.go()

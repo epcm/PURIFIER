@@ -1,10 +1,18 @@
 import pgzrun
 
-hero = Actor('prince')
-animate(hero, duration = 1, angle = 10)
+class monster(Actor):
+    def __init__(self, HP):
+        super().__init__('red_din')
+        self.HP = HP
+
+red_dino = monster(HP = 10)
+print(red_dino.image - 'din')
 
 def draw():
-    screen.clear()
-    hero.draw()
+    red_dino.draw()
+
+def update():
+    red_dino.x += 1
+
 
 pgzrun.go()
