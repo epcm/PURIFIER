@@ -26,6 +26,7 @@ class HP(object):
             return
         else:
             return True
+        
 
 class Monster(Actor):
     def __init__(self, image, full_HP):
@@ -106,14 +107,19 @@ class Monster(Actor):
         animate(self, duration = 0.1, angle = 0)
 
 class Weapon(Actor):
-    def __init__(self, image, type, distance, damage, price):
+    def __init__(self, image, type, distance, damage, price, MP_consuming):
         super().__init__(image)
         self.type = type # 1为近战武器，2为远程武器
         self.distance = distance
         self.damage = damage
         self.price = price
+        self.MP_consuming = MP_consuming
     
     def attack(self, pos):
+        global current_MP
+        if self.MP_consuming > current_MP:
+            return
+        current_MP -= self.MP_consuming
         # 近战武器
         if self.type == 1:
             #clock.schedule_interval(animate_chop, 1)
@@ -172,16 +178,16 @@ def animate_chop():
 ##################全局变量global##########################
 
 # 武器模块
-# 参数依次为 image, type, distance, damage, price
-fuzi = Weapon("斧子", 1, 100, 1, 2)
-gong1 = Weapon("弓1", 2, 300, 2, 1)
-gong2 = Weapon("弓2_trans", 2, 500, 3, 2) # 半透明代表未拥有
-jian1= Weapon("剑1_trans", 1, 100, 1, 2)
-jian2 = Weapon("剑2_trans", 1, 100, 1, 2)
-qiang1 = Weapon("枪1_trans", 2, 100, 1, 2)
-qiang2 = Weapon("枪2_trans", 2, 100, 1, 2)
-changmao1 = Weapon("长矛1_trans", 1, 100, 1, 2)
-changmao2 = Weapon("长矛2_trans", 1, 100, 1, 2)
+# 参数依次为 image, type, distance, damage, price, MP_consuming
+fuzi = Weapon("斧子", 1, 100, 1, 2, 10)
+gong1 = Weapon("弓1", 2, 300, 2, 1, 10)
+gong2 = Weapon("弓2_trans", 2, 500, 3, 2, 10) # 半透明代表未拥有
+jian1= Weapon("剑1_trans", 1, 100, 1, 2, 10)
+jian2 = Weapon("剑2_trans", 1, 100, 1, 2, 10)
+qiang1 = Weapon("枪1_trans", 2, 100, 1, 2, 10)
+qiang2 = Weapon("枪2_trans", 2, 100, 1, 2, 10)
+changmao1 = Weapon("长矛1_trans", 1, 100, 1, 2, 10)
+changmao2 = Weapon("长矛2_trans", 1, 100, 1, 2, 10)
 fuzi.pos = (370,240)
 gong1.pos = (405,240)
 gong2.pos = (445,240)
@@ -198,7 +204,7 @@ monster_bullets = []
 
 # 参战武器槽与参战武器控制
 weapon_bar = Actor('weapon_bar')
-weapon_bar.pos = 300, 40
+weapon_bar.pos = 320, 40
 weapons_on_bar = [fuzi, gong1]
 current_weapon_id = 0
 current_weapon = weapons_on_bar[current_weapon_id]
@@ -234,6 +240,9 @@ HEIGHT = background1.height #+ 300
 # 在场角色
 hero = Actor("prince")
 hero_HP = HP(1000, 3)  #初始化王子HP
+full_MP = 100
+current_MP = 100
+MP_recoving_speed = 0.05 #每次刷新的MP恢复量
 monsters = []
 
 # 游戏控制
@@ -287,21 +296,25 @@ def open_box():
         number = random.randint(20, 40)
         coins += number
 
-# 画血条
-def draw_hp_bar():
+# 画血条和蓝条
+def draw_status_bar():
     global step
     if (hero_HP.isdead()):
         step = 3
-    HPBar = Rect((20, 20), (200, 35))  #血槽
     currentHP_bar = Rect(
-        (20, 20), (200 * hero_HP.current_HP / hero_HP.full_HP, 33))  #当前血量
-    screen.draw.rect(HPBar, 'black')
-    screen.draw.filled_rect(currentHP_bar, 'black')
+        (27, 26), (235 * hero_HP.current_HP / hero_HP.full_HP, 13))  #当前血量
+    screen.blit('status_bar', (20, 20))
+    screen.draw.filled_rect(currentHP_bar, 'red')
+
+    currentMP_bar = Rect(
+        (27, 54), (235 * current_MP / full_MP, 13))  #当前血量
+    screen.blit('status_bar', (20, 48))
+    screen.draw.filled_rect(currentMP_bar, 'blue')
 
 # 画金币
 def draw_coins_bar():
-    screen.blit('gloden', (20, 60))  #20,60
-    screen.draw.text(str(coins), (125, 77), fontsize=50, color = 'black')  #125 77
+    screen.blit('gloden', (20, 80))  #20,60
+    screen.draw.text(str(coins), (125, 97), fontsize=50, color = 'gold')  #125 77
 
 
 ### 上下左右行走模块函数 ###
@@ -352,18 +365,19 @@ def on_mouse_down(pos, button):
         if store_button.collidepoint(pos):
             step_store = 1
         else:
-            if not step_store in range(1, 11) and not bag_open:
+            if not step_store in range(1, 11) and not bag_open:# 即未在商店和背包
                 current_weapon.attack(pos)
             else:
                 global weapons
                 count = 2 #标识第几个武器
                 for i in weapons:
                     if i.collidepoint(pos):
-                        step_store = count
                         if i in bag_weapons:
                             weapons_on_bar[current_weapon_id] = i
-                            current_weapon = weapons_on_bar[current_weapon_id]
                             current_weapon_id = (current_weapon_id+1)%2
+                            current_weapon = weapons_on_bar[current_weapon_id]
+                        else:
+                            step_store = count
                     count += 1
                 if Pur_button.collidepoint(pos) and not bag_open:
                     purchase_judge(step_store)
@@ -408,7 +422,7 @@ def draw():
         for monster in monsters:
             monster.draw()
             screen.draw.filled_rect(monster.HP_bar, 'gray')
-            screen.draw.filled_rect(monster.currentHP_bar, 'white')
+            screen.draw.filled_rect(monster.currentHP_bar, 'black')
         send.draw()
 
         # elif step == 2:
@@ -425,7 +439,7 @@ def draw():
         for monster in monsters:
             monster.draw()
             screen.draw.filled_rect(monster.HP_bar, 'gray')
-            screen.draw.filled_rect(monster.currentHP_bar, 'white')
+            screen.draw.filled_rect(monster.currentHP_bar, 'red')
         for i in range(3):
             for i in range(4):
                 boxes[i].draw()
@@ -445,7 +459,7 @@ def draw():
     
 
     #HP、金币状态绘制
-    draw_hp_bar()
+    draw_status_bar()
     draw_coins_bar()
 
     # 子弹绘制
@@ -456,8 +470,8 @@ def draw():
 
     #武器槽绘制
     weapon_bar.draw()
-    screen.blit(weapons_on_bar[0].image, (265, 26))
-    screen.blit(weapons_on_bar[1].image, (303, 26))
+    screen.blit(weapons_on_bar[0].image, (285, 26))
+    screen.blit(weapons_on_bar[1].image, (323, 26))
     
     ######注：上面三部分绘制会在开始界面出现，我不是很懂开始界面的逻辑，希望能修正，感觉加个if判断就行
 
@@ -500,7 +514,7 @@ def draw():
     ####################update函数#################################
 
 def update():
-    global step, hero, game, check
+    global step, hero, game, check, current_MP, current_weapon
     # 往右走
     if game:
         if keyboard.D:
@@ -524,6 +538,9 @@ def update():
             hero.y += 5
             step = 7
 
+        current_weapon = weapons_on_bar[current_weapon_id]
+        if current_MP < full_MP:
+            current_MP += MP_recoving_speed
 
         #####子弹更新模块#####
         for i in bullets:
