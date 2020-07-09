@@ -1,8 +1,8 @@
 import pgzrun
 import csv
 import random
-import numpy as np
-
+#import numpy as math
+import math
 
 FM = open('Monsters.csv', encoding = 'utf-8-sig')
 FW = open('Weapons.csv', encoding = 'utf-8-sig')
@@ -69,10 +69,12 @@ class Monster(Actor):
         #靠近至一定距离时怪兽主动接近
         if not self.beaten:
             if self.distance_to(hero) < self.autochase_distance:
-                '''
-                self.speed_x = standard_speed**1.5 * math.cos(radians(self.angle_to(hero)))
-                self.speed_y = -standard_speed**1.5 * math.sin(radians(self.angle_to(hero)))'''
-                ## 注意以下模块中speed维持非负
+                
+                self.speed_x = STANDARD_SPEED **1.5 * math.cos(math.radians(self.angle_to(hero))) * self.speed_rate
+                self.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(self.angle_to(hero))) * self.speed_rate
+                self.x += self.speed_x
+                self.y += self.speed_y                
+                '''## 注意以下模块中speed维持非负
                 if self.x > hero.x:
                     self.x -= self.speed_x
                 elif self.x < hero.x:
@@ -87,16 +89,16 @@ class Monster(Actor):
                     self.y += self.speed_y
                 else:
                     self.speed_x = STANDARD_SPEED ** 1.5 * self.speed_rate
-                self.speed_y = STANDARD_SPEED
+                self.speed_y = STANDARD_SPEED'''
             else:
                 #平均2s一次的随机转向
                 if random.randint(1, 120) == 1:
                     #ang = random.randint(-180, 180)
-                    ang = random.choice([0, 45, 90, 135, 180, 225, 270, 315])
-                    self.speed_x = STANDARD_SPEED ** 1.5 * np.cos(np.radians(ang)) * self.speed_rate
-                    self.speed_x = -STANDARD_SPEED ** 1.5 * np.sin(np.radians(ang)) * self.speed_rate
-            self.x += self.speed_x
-            self.y += self.speed_y
+                    ang = random.randint(0, 360)#choice([0, 45, 90, 135, 180, 225, 270, 315])
+                    self.speed_x = STANDARD_SPEED ** 1.5 * math.cos(math.radians(ang)) * self.speed_rate
+                    self.speed_x = -STANDARD_SPEED ** 1.5 * math.sin(math.radians(ang)) * self.speed_rate
+                self.x += self.speed_x
+                self.y += self.speed_y
 
         if WIDTH <= self.x or self.x <= 0:
             self.speed_x *= -1
@@ -114,6 +116,10 @@ class Monster(Actor):
         animate(self, duration = 0.2, angle = -30)
     def shake3(self):
         animate(self, duration = 0.1, angle = 0)
+
+    # 从迟缓状态恢复
+    def reset_speed_rate(self):
+        self.speed_rate /= 0.8
 
 class Weapon(Actor):
     def __init__(self, image,type,distance,damage,price,MP_consuming,bullet_image,speed_rate,Note):
@@ -154,6 +160,8 @@ class Weapon(Actor):
                         monster.HP.current_HP -= self.damage
                         if monster.HP.isdead():
                             monsters.remove(monster)
+                            global Total
+                            Total -= 1
                         monster.animate_shake()
                         monster.beaten = True
         
@@ -169,6 +177,13 @@ class Weapon(Actor):
                 b2.pos = hero.pos
                 bullets.append(b1)
                 bullets.append(b2)
+            elif self is changmao1:
+                mindis = 10000
+                for monster in monsters:
+                    dis = monster.distance_to(hero)
+                    if  dis < mindis:
+                        mindis = dis
+                        b.target = monster
 
 class Bullet(Actor):
     def __init__(self, image, distance, damage, speed_rate, ang):
@@ -176,9 +191,11 @@ class Bullet(Actor):
         self.damage = damage
         self.distance = distance
         self.angle = ang
-        self.speed_x = STANDARD_SPEED ** 1.5 *np.cos(np.radians(ang)) * speed_rate
-        self.speed_y = -STANDARD_SPEED ** 1.5 *np.sin(np.radians(ang)) * speed_rate
+        self.speed_x = STANDARD_SPEED ** 1.5 *math.cos(math.radians(ang)) * speed_rate
+        self.speed_y = -STANDARD_SPEED ** 1.5 *math.sin(math.radians(ang)) * speed_rate
         self.count_time = 0 #计时工具
+        self.target = None # 长矛1的跟踪对象
+        self.speed_rate = speed_rate
 
 
 
@@ -274,6 +291,7 @@ isLoose = False
 start = False
 game = False
 step = 99
+Total = 3
 
 # 箱子部分
 n = int(dic['box_num'])
@@ -579,6 +597,11 @@ def update():
 
         #####子弹更新模块#####
         for i in bullets:
+            if i.image == '长矛1_bullet':
+                ang = i.angle_to(i.target)
+                i.speed_x = STANDARD_SPEED **1.5 * math.cos(math.radians(ang))
+                i.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(ang))
+                i.angle = ang
             i.x += i.speed_x
             i.y += i.speed_y
             i.count_time += 1
@@ -587,12 +610,17 @@ def update():
             for monster in monsters:
                 if monster.colliderect(i):
                     monster.HP.current_HP -= i.damage
+                    if i.image == '箭_ice':
+                        clock.schedule(monster.reset_speed_rate, 3)
+                        monster.speed_rate *= 0.8
                     if i.image != '长矛2_bullet':
                         bullets.remove(i)
                     tone.play('A1', 0.1)
                     monster.animate_shake()
                 if monster.HP.isdead():
                     monsters.remove(monster)
+                    global Total
+                    Total -= 1
         
         for i in monster_bullets:
             i.x += i.speed_x
