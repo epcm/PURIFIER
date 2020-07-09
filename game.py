@@ -375,7 +375,7 @@ def down_movement():
 
 # 商店的购买判断
 def purchase_judge(n):
-    global coins, step_store1, step_store
+    global coins, step_store1, step_store, current_weapon_id
     if coins < weapons[step_store - 2].price:
         step_store1 = 20
         clock.schedule(reset_step_store1, 2)
@@ -384,6 +384,9 @@ def purchase_judge(n):
         key.image = f'{key.image[:-6]}'#将半透明图像替换为不透明图像
         coins = coins - weapons[step_store - 2].price
         bag_weapons.append(key)
+        weapons_on_bar[current_weapon_id] = key
+        current_weapon_id = (current_weapon_id+1)%2
+        current_weapon = weapons_on_bar[current_weapon_id]
         step_store = 1
 
 # 用于clock.schedule调用，清除金钱不够的信息
@@ -401,7 +404,10 @@ def on_mouse_down(pos, button):
             step_store = 1 #返回商店初始界面
         else:
             step_store = 12 #退出商店
-        bag_open = False
+            current_weapon_id = 0
+        if bag_open:
+            bag_open = False
+            current_weapon_id = 0
     else:
         if weapon_bar.collidepoint(pos):
             bag_open = True
@@ -503,7 +509,7 @@ def draw():
             clock.schedule(down_movement, 0.01)
 
     # 游戏进行中
-    if step in range(1, 8): 
+    if step in range(0, 8): 
         for i in range(n):
             boxes[i].draw()
         send.draw()
@@ -525,6 +531,12 @@ def draw():
         weapon_bar.draw()
         screen.blit(weapons_on_bar[0].image, (285, 26))
         screen.blit(weapons_on_bar[1].image, (323, 26))
+        frame1 = Rect((285, 24), (34, 34))
+        frame2 = Rect((323, 24), (34, 34))
+        if current_weapon_id == 0:
+            screen.draw.rect(frame1, 'red')
+        else:
+            screen.draw.rect(frame2, 'red')
     
 
     # 背包绘制
