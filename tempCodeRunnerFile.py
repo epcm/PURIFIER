@@ -1,2 +1,0 @@
-
-                        minsdis = dis
