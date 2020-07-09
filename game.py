@@ -1,9 +1,13 @@
 import pgzrun
-import turtle
+import csv
 import random
-import math
+import numpy as np
 
-music.play('达拉崩吧')
+
+FM = open('Monsters.csv', encoding = 'utf-8-sig')
+FW = open('Weapons.csv', encoding = 'utf-8-sig')
+FG = open('GlobalConst.csv', encoding = 'utf-8-sig')
+#music.play('达拉崩吧')
 
 ###############类class######################
 
@@ -29,25 +33,31 @@ class HP(object):
         
 
 class Monster(Actor):
-    def __init__(self, image, full_HP):
+    # 参数传入亦可改写为args，更简洁美观，不过可读性下降
+    def __init__(self, image, full_HP, attack_distance,attack_damage,clash_damage,speed_rate,bullet_image,bullet_speed_rate,autochase_distance):
         super().__init__(image)
         self.list = []
-        self.HP = HP(full_HP, 1)
-        self.HP_bar = Rect((0, 0), (28, 5))
-        self.currentHP_bar = Rect((0, 0), (28, 5))
-        self.speed_x = random.choice([1, -1]) * standard_speed
-        self.speed_y = random.choice([1, -1]) * standard_speed
-        self.attack_distance = 250
-        self.attack_damage = 1
-        self.beaten = False
+        self.HP = HP(float(full_HP), 1) # 血量类
+        self.HP_bar = Rect((0, 0), (28, 5)) # 满血条
+        self.currentHP_bar = Rect((0, 0), (28, 5)) # 血条
+        self.speed_rate = float(speed_rate) # 移动速度
+        self.speed_x = random.choice([1, -1]) * STANDARD_SPEED * self.speed_rate
+        self.speed_y = random.choice([1, -1]) * STANDARD_SPEED * self.speed_rate # 速度
+        self.attack_distance = float(attack_distance) # 攻击距离
+        self.attack_damage = float(attack_damage) # 攻击伤害
+        self.beaten = False # 击退状态
+        self.bullet_image = bullet_image # 攻击图像
+        self.clash_damage = float(clash_damage) # 接触伤害
+        self.autochase_distance = float(autochase_distance) # 自动追逐距离
+        self.bullet_speed_rate = float(bullet_speed_rate) # 发射攻击速度
+
     
     # 怪兽在被击退后重获速度
     def recover(self):
         self.beaten = False
     
     def attack(self):
-        b = Bullet(self.attack_distance, self.attack_damage, self.angle_to(hero))
-        b.image = 'fireball'
+        b = Bullet(self.bullet_image,self.attack_distance, self.attack_damage, self.bullet_speed_rate,self.angle_to(hero))
         b.pos = self.pos
         monster_bullets.append(b)
         
@@ -58,8 +68,8 @@ class Monster(Actor):
         self.currentHP_bar.topleft = self.x - 11, self.y - 18
         #靠近至一定距离时怪兽主动接近
         if not self.beaten:
-            if self.distance_to(hero) < 200:
-                '''#if random.randint(1,6) == 1:
+            if self.distance_to(hero) < self.autochase_distance:
+                '''
                 self.speed_x = standard_speed**1.5 * math.cos(radians(self.angle_to(hero)))
                 self.speed_y = -standard_speed**1.5 * math.sin(radians(self.angle_to(hero)))'''
                 ## 注意以下模块中speed维持非负
@@ -68,32 +78,31 @@ class Monster(Actor):
                 elif self.x < hero.x:
                     self.x += self.speed_x
                 else:
-                    self.speed_y = standard_speed ** 1.5
-                self.speed_x = standard_speed
+                    self.speed_y = STANDARD_SPEED ** 1.5 * self.speed_rate
+                self.speed_x = STANDARD_SPEED
 
                 if self.y > hero.y:
                     self.y -= self.speed_y
                 elif self.y < hero.y:
                     self.y += self.speed_y
                 else:
-                    self.speed_x = standard_speed ** 1.5
-                self.speed_y = standard_speed
-
+                    self.speed_x = STANDARD_SPEED ** 1.5 * self.speed_rate
+                self.speed_y = STANDARD_SPEED
             else:
                 #平均2s一次的随机转向
                 if random.randint(1, 120) == 1:
                     #ang = random.randint(-180, 180)
                     ang = random.choice([0, 45, 90, 135, 180, 225, 270, 315])
-                    self.speed_x = standard_speed ** 1.5 * math.cos(math.radians(ang))
-                    self.speed_x = -standard_speed ** 1.5 * math.sin(math.radians(ang))
-                self.x += self.speed_x
-                self.y += self.speed_y
+                    self.speed_x = STANDARD_SPEED ** 1.5 * np.cos(np.radians(ang)) * self.speed_rate
+                    self.speed_x = -STANDARD_SPEED ** 1.5 * np.sin(np.radians(ang)) * self.speed_rate
+            self.x += self.speed_x
+            self.y += self.speed_y
 
         if WIDTH <= self.x or self.x <= 0:
             self.speed_x *= -1
         if HEIGHT <= self.y or self.y <= 0:
             self.speed_y *= -1
-    
+
     # 怪兽shake
     def animate_shake(self):
         animate(self, duration = 0.1, angle = 30)
@@ -107,13 +116,16 @@ class Monster(Actor):
         animate(self, duration = 0.1, angle = 0)
 
 class Weapon(Actor):
-    def __init__(self, image, type, distance, damage, price, MP_consuming):
+    def __init__(self, image,type,distance,damage,price,MP_consuming,bullet_image,speed_rate,Note):
         super().__init__(image)
-        self.type = type # 1为近战武器，2为远程武器
-        self.distance = distance
-        self.damage = damage
-        self.price = price
-        self.MP_consuming = MP_consuming
+        self.type = int(type) # 1为近战武器，2为远程武器
+        self.distance = float(distance) # 攻击距离
+        self.damage = float(damage) # 伤害
+        self.price = float(price) # 价格
+        self.MP_consuming = float(MP_consuming) # MP消耗
+        self.bullet_image = bullet_image # 子弹图像
+        self.speed_rate = float(speed_rate) # 子弹速度
+        self.Note = Note # 武器信息
     
     def attack(self, pos):
         global current_MP
@@ -132,13 +144,13 @@ class Weapon(Actor):
                     (step == 7 and -150 <ang < -30)):
                         monster.HP.current_HP -= self.damage
                         if step == 4:
-                            monster.x += standard_speed*10
+                            monster.x += STANDARD_SPEED*10
                         elif step == 5:
-                            monster.x -= standard_speed*10
+                            monster.x -= STANDARD_SPEED*10
                         elif step == 6:
-                            monster.y -= standard_speed*10
+                            monster.y -= STANDARD_SPEED*10
                         elif step == 7:
-                            monster.y += standard_speed*10
+                            monster.y += STANDARD_SPEED*10
                         monster.HP.current_HP -= self.damage
                         if monster.HP.isdead():
                             monsters.remove(monster)
@@ -147,18 +159,25 @@ class Weapon(Actor):
         
         # 远程武器
         elif self.type == 2:
-            b = Bullet(self.distance, self.damage, hero.angle_to(pos))
+            b = Bullet(self.bullet_image, self.distance, self.damage, self.speed_rate,hero.angle_to(pos))
             b.pos = hero.pos
             bullets.append(b)
+            if self is qiang1:
+                b1 = Bullet(self.bullet_image, self.distance, self.damage, self.speed_rate,hero.angle_to(pos) + 20)
+                b2 = Bullet(self.bullet_image, self.distance, self.damage, self.speed_rate,hero.angle_to(pos) - 20)
+                b1.pos = hero.pos
+                b2.pos = hero.pos
+                bullets.append(b1)
+                bullets.append(b2)
 
 class Bullet(Actor):
-    def __init__(self, distance, damage, ang):
-        super().__init__('子弹特效1')
+    def __init__(self, image, distance, damage, speed_rate, ang):
+        super().__init__(image)
         self.damage = damage
         self.distance = distance
         self.angle = ang
-        self.speed_x = standard_speed ** 1.5 *math.cos(math.radians(ang))
-        self.speed_y = -standard_speed ** 1.5 *math.sin(math.radians(ang))
+        self.speed_x = STANDARD_SPEED ** 1.5 *np.cos(np.radians(ang)) * speed_rate
+        self.speed_y = -STANDARD_SPEED ** 1.5 *np.sin(np.radians(ang)) * speed_rate
         self.count_time = 0 #计时工具
 
 
@@ -176,18 +195,21 @@ def animate_chop():
 
 
 ##################全局变量global##########################
+FGreader = csv.DictReader(FG)
+dic = next(FGreader)
 
 # 武器模块
 # 参数依次为 image, type, distance, damage, price, MP_consuming
-fuzi = Weapon("斧子", 1, 100, 1, 2, 10)
-gong1 = Weapon("弓1", 2, 300, 2, 1, 10)
-gong2 = Weapon("弓2_trans", 2, 500, 3, 2, 10) # 半透明代表未拥有
-jian1= Weapon("剑1_trans", 1, 100, 1, 2, 10)
-jian2 = Weapon("剑2_trans", 1, 100, 1, 2, 10)
-qiang1 = Weapon("枪1_trans", 2, 100, 1, 2, 10)
-qiang2 = Weapon("枪2_trans", 2, 100, 1, 2, 10)
-changmao1 = Weapon("长矛1_trans", 1, 100, 1, 2, 10)
-changmao2 = Weapon("长矛2_trans", 1, 100, 1, 2, 10)
+ls = list(csv.reader(FW))
+fuzi = Weapon(*ls[1])
+gong1 = Weapon(*ls[2])
+gong2 = Weapon(*ls[3]) # 半透明代表未拥有
+jian1= Weapon(*ls[4])
+jian2 = Weapon(*ls[5])
+qiang1 = Weapon(*ls[6])
+qiang2 = Weapon(*ls[7])
+changmao1 = Weapon(*ls[8])
+changmao2 = Weapon(*ls[9])
 fuzi.pos = (370,240)
 gong1.pos = (405,240)
 gong2.pos = (445,240)
@@ -219,7 +241,7 @@ bag_open = False
 weapons = [fuzi, gong1, gong2, jian1, jian2, qiang1, qiang2, changmao1, changmao2]
 
 # 金币，商店页面控制
-coins = 10
+coins = int(dic['coins'])
 step_store = 0
 step_store1 = 0
 
@@ -229,7 +251,7 @@ store_inner = Actor("store")
 Pur_button = Actor("purchase")
 
 # 标准速度
-standard_speed = 2
+STANDARD_SPEED = float(dic['STANDARD_SPEED'])
 
 # 地图与背景
 background1 = Actor("bg1")  # 896, 448
@@ -239,10 +261,12 @@ HEIGHT = background1.height #+ 300
 
 # 在场角色
 hero = Actor("prince")
-hero_HP = HP(1000, 3)  #初始化王子HP
-full_MP = 100
-current_MP = 100
-MP_recoving_speed = 0.05 #每次刷新的MP恢复量
+hero_HP = HP(float(dic['HP']), int(dic['LIFE']))  #初始化王子HP
+full_MP = float(dic['MP'])
+HERO_SPEED = float(dic['HERO_SPEED'])
+HERO_SPEED_DICT = {4:(HERO_SPEED, 0), 5:(-HERO_SPEED, 0), 6:(0, -HERO_SPEED), 7:(0, HERO_SPEED)}
+current_MP = full_MP
+MP_RECOVERY_SPEED = float(dic['MP_RECOVERY_SPEED']) #每次刷新的MP恢复量
 monsters = []
 
 # 游戏控制
@@ -252,18 +276,16 @@ game = False
 step = 99
 
 # 箱子部分
-n = 3
-box = Actor('box_close')
-box1 = Actor('box_close')
-box2 = Actor('box_close')
-box3 = Actor('box_close')
+n = int(dic['box_num'])
+boxes = []
+for _ in range(n):
+    boxes.append(Actor('box_close'))
 send = Actor('传送门')
 background1 = Actor('bg1')
 send.bottomright = 1200, 450#send.pos = 700, 500
 
-boxes = [box, box1, box2, box3]
 
-for i in range(4):
+for i in range(n):
     a = random.randint(100, 800)
     b = random.randint(150, 430)#(150, 600)
     boxes[i].x = a
@@ -271,22 +293,22 @@ for i in range(4):
     boxes[i].open = False
 
 ################各类函数##############################
-
+ls = list(csv.reader(FM))
 def open_box():
     global check, coins
     j = check
     bit = random.randint(0, 30)
     if bit % 5 == 0:
         boxes[j].image = 'box_open'
-        mon = Monster('red_dino', 10)
+        mon = Monster(*ls[1])
         mon.pos = boxes[j].pos
         monsters.append(mon)
     elif bit % 5 == 1:
-        mon = Monster('green_din', 10)
+        mon = Monster(*ls[2])
         mon.pos = boxes[j].pos
         monsters.append(mon)
     elif bit % 5 == 2:
-        mon = Monster('red_din', 10)
+        mon = Monster(*ls[3])
         mon.pos = boxes[j].pos
         monsters.append(mon)
     elif bit % 5 == 3 or bit % 5 == 4:
@@ -357,7 +379,10 @@ def on_mouse_down(pos, button):
     global coins
     global step_store, bag_open, current_weapon, current_weapon_id, weapons_on_bar
     if button == mouse.RIGHT:
-        step_store = 12
+        if step_store in range(2, 11):
+            step_store = 1 #返回商店初始界面
+        else:
+            step_store = 12 #退出商店
         bag_open = False
     else:
         if weapon_bar.collidepoint(pos):
@@ -391,6 +416,9 @@ def on_key_down(key):
         step = 2
     elif key == keys.K_3:
         step = 3
+        FM.close()
+        FW.close()
+        FG.close()
         exit()
 
 #### 切换武器
@@ -431,6 +459,9 @@ def draw():
             screen.clear()
             screen.fill('white')
             screen.draw.text("You have lose your game, please exit!", (200, 200), fontsize=50, color="orange")
+            FM.close()
+            FW.close()
+            FG.close()
             clock.schedule(exit, 3)
 
     ### 上下左右移动模块 ####
@@ -440,10 +471,6 @@ def draw():
             monster.draw()
             screen.draw.filled_rect(monster.HP_bar, 'gray')
             screen.draw.filled_rect(monster.currentHP_bar, 'red')
-        for i in range(3):
-            for i in range(4):
-                boxes[i].draw()
-        send.draw()
 
 
         hero.draw()
@@ -456,24 +483,31 @@ def draw():
             clock.schedule(up_movement, 0.01)
         if step == 7:
             clock.schedule(down_movement, 0.01)
+
+    # 游戏进行中
+    if step in range(1, 8): 
+        for i in range(n):
+            boxes[i].draw()
+        send.draw()
+
+        #HP、金币状态绘制
+        draw_status_bar()
+        draw_coins_bar()
+
+        # 商店图标
+        store_button.draw()
+
+        # 子弹绘制
+        for i in bullets:
+            i.draw()
+        for i in monster_bullets:
+            i.draw()
+
+        #武器槽绘制
+        weapon_bar.draw()
+        screen.blit(weapons_on_bar[0].image, (285, 26))
+        screen.blit(weapons_on_bar[1].image, (323, 26))
     
-
-    #HP、金币状态绘制
-    draw_status_bar()
-    draw_coins_bar()
-
-    # 子弹绘制
-    for i in bullets:
-        i.draw()
-    for i in monster_bullets:
-        i.draw()
-
-    #武器槽绘制
-    weapon_bar.draw()
-    screen.blit(weapons_on_bar[0].image, (285, 26))
-    screen.blit(weapons_on_bar[1].image, (323, 26))
-    
-    ######注：上面三部分绘制会在开始界面出现，我不是很懂开始界面的逻辑，希望能修正，感觉加个if判断就行
 
     # 背包绘制
     if bag_open:
@@ -483,7 +517,6 @@ def draw():
             w.draw()
 
     #商店图标绘制
-    store_button.draw()
     store_button.pos= WIDTH-50, 50#(WIDTH-50,HEIGHT-50)
     if step_store == 1:
         store_inner.draw()
@@ -500,13 +533,15 @@ def draw():
         changmao1.pos = (630,240)
         changmao2.pos = (370,280)
     #购买点击图标
-    x1,y1 = 450,200
+    x0,y0 = 400,150
+    x1,y1 = 400,200
     x2,y2 = 500,300
 
     if step_store in range(2,11) and not bag_open:
         Pur_button.draw()
         Pur_button.pos = (x2,y2)
-        screen.draw.text("Price: %d "%weapons[step_store-2].price,(x1,y1),fontsize=50,color = "black")
+        screen.draw.text("Price: %d "%weapons[step_store-2].price,(x1,y1),fontsize=50,color = "gold")
+        screen.draw.text(weapons[step_store-2].Note,(x0, y0),fontsize=50,color = "gold")
 
     if step_store1 == 20:
         screen.draw.text("Your coins are not ENOUGH!",(300,400),fontsize=50,color = "red")
@@ -518,41 +553,42 @@ def update():
     # 往右走
     if game:
         if keyboard.D:
-            hero.x += 5
+            hero.x += HERO_SPEED
             if hero.x >= WIDTH:
                 hero.x = WIDTH - 30
             step = 4
         elif keyboard.A:
             if hero.x < 0:
                 hero.x = 0 + 30
-            hero.x -= 5
+            hero.x -= HERO_SPEED
             step = 5
         elif keyboard.W:
             if hero.y < 0:
                 hero.y = 0 + 30
-            hero.y -= 5
+            hero.y -= HERO_SPEED
             step = 6
         elif keyboard.S:
             if hero.y >= HEIGHT:
                 hero.y = HEIGHT - 30
-            hero.y += 5
+            hero.y += HERO_SPEED
             step = 7
 
         current_weapon = weapons_on_bar[current_weapon_id]
         if current_MP < full_MP:
-            current_MP += MP_recoving_speed
+            current_MP += MP_RECOVERY_SPEED
 
         #####子弹更新模块#####
         for i in bullets:
             i.x += i.speed_x
             i.y += i.speed_y
             i.count_time += 1
-            if(i.count_time >= i.distance/standard_speed**1.5):
+            if(i.count_time >= i.distance/STANDARD_SPEED**1.5):
                 bullets.remove(i)
             for monster in monsters:
                 if monster.colliderect(i):
                     monster.HP.current_HP -= i.damage
-                    bullets.remove(i)
+                    if i.image != '长矛2_bullet':
+                        bullets.remove(i)
                     tone.play('A1', 0.1)
                     monster.animate_shake()
                 if monster.HP.isdead():
@@ -562,7 +598,7 @@ def update():
             i.x += i.speed_x
             i.y += i.speed_y
             i.count_time += 1
-            if(i.count_time >= i.distance/standard_speed**1.5):
+            if(i.count_time >= i.distance/STANDARD_SPEED**1.5):
                 monster_bullets.remove(i)
             if hero.colliderect(i):
                 hero_HP.current_HP -= i.damage
@@ -576,7 +612,7 @@ def update():
             monster.move()
 
         # 画箱子函数
-        for j in range(0, 4):
+        for j in range(n):
             if hero.colliderect(boxes[j]) and boxes[j].open == False:
                 check = j
                 boxes[j].image = 'box_open'
@@ -586,7 +622,7 @@ def update():
     for monster in monsters:
         if hero.colliderect(monster):
             #tone.play('G2', 0.5)
-            hero_HP.current_HP -= 0.05
+            hero_HP.current_HP -= monster.clash_damage
         for i in range(3):
             if hero.colliderect(boxes[i]):
                 boxes[i].image = 'box_open'
