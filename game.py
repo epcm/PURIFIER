@@ -26,7 +26,7 @@ class HP(object):
         elif self.current_HP <= 0 and self.count < self.num:  #能复活
             self.current_HP = self.full_HP
             self.count += 1
-            hero.pos = (0, 0)
+            hero.bottomleft = (0, HEIGHT)
             return
         else:
             return True
@@ -134,13 +134,15 @@ class Weapon(Actor):
         self.Note = Note # 武器信息
     
     def attack(self, pos):
-        global current_MP
+        global current_MP, animate_image_count
         if self.MP_consuming > current_MP:
             return
         current_MP -= self.MP_consuming
         # 近战武器
         if self.type == 1:
-            #clock.schedule_interval(animate_chop, 1)
+            if step in [4, 5]:
+                animate_image_count = 1
+                clock.schedule_interval(animate_chop, 0.05)
             for monster in monsters:
                 if hero.distance_to(monster) < self.distance:
                     ang = hero.angle_to(monster)
@@ -199,16 +201,14 @@ class Bullet(Actor):
 
 
 
-'''# 近战动画
-image_count = 1
+# 近战动画
+animate_image_count = ''
 def animate_chop():
-    global image_count
-    if(step == 4):
-        hero.image = "prince_right_斧子{}".format(image_count)
-    image_count += 1
-    if image_count > 3:
+    global animate_image_count
+    animate_image_count += 1
+    if animate_image_count > 3:
         clock.unschedule(animate_chop)
-        image_count = 1'''
+        animate_image_count = ''
 
 
 ##################全局变量global##########################
@@ -278,6 +278,7 @@ HEIGHT = background1.height #+ 300
 
 # 在场角色
 hero = Actor("prince")
+hero.bottomleft = 0, HEIGHT
 hero_HP = HP(float(dic['HP']), int(dic['LIFE']))  #初始化王子HP
 full_MP = float(dic['MP'])
 HERO_SPEED = float(dic['HERO_SPEED'])
@@ -359,11 +360,11 @@ def draw_coins_bar():
 
 ### 上下左右行走模块函数 ###
 def left_movement():
-    hero.image = f"prince_left_{current_weapon.image}"
+    hero.image = f"prince_left_{current_weapon.image}{animate_image_count}"
 
 
 def right_movement():
-    hero.image = f"prince_right_{current_weapon.image}"
+    hero.image = f"prince_right_{current_weapon.image}{animate_image_count}"
 
 
 def up_movement():
