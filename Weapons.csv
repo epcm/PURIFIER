@@ -1,10 +1,10 @@
 ﻿image,type,distance,damage,price,MP_consuming,bullet_image,speed_rate,Note
-斧子,1,100,1,0,10,-1,-1,Normal
+斧子,1,50,1,0,10,-1,-1,Normal
 弓1,2,200,1,0,10,箭,1.5,Normal
 弓2_trans,2,200,1,30,15,箭_ice,1.5,Slow Down the Monster
 剑1_trans,1,100,3,30,15,-1,-1,High Damage
-剑2_trans,1,200,2,30,15,-1,-1,Long Distance
+剑2_trans,1,100,2,30,15,-1,-1,Long Beaten Distance
 枪1_trans,2,200,2,30,15,子弹特效1,1.5,Multiple Bullets
 枪2_trans,2,200,3,30,20,子弹特效2,2,Improved Attack
-长矛1_trans,2,500,3,40,20,长矛1_bullet,1.5,Trace Your Nearest Enemy 
+长矛1_trans,2,500,30,40,20,长矛1_bullet,1.5,Trace Your Nearest Enemy 
 长矛2_trans,2,300,0.2,40,30,长矛2_bullet,2,Penetrating Attack

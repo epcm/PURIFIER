@@ -12,7 +12,7 @@ FM = open('Monsters.csv', encoding = 'utf-8-sig')
 FW = open('Weapons.csv', encoding = 'utf-8-sig')
 FG = open('GlobalConst.csv', encoding = 'utf-8-sig')
 #music.play('达拉崩吧')
-pos = [(1000, 400), (1000, 400), (1000, 300), (1500, 600)]
+pos = [(1000, 400), (1000, 400), (1000, 300), (600, 300)]
 surface = Actor('purifier1')
 
 
@@ -108,7 +108,7 @@ class Monster(Actor):
 
     # 从迟缓状态恢复
     def reset_speed_rate(self):
-        self.speed_rate /= 0.8
+        self.speed_rate /= 0.5
 
 class Boss(Actor):
     def __init__(self):
@@ -121,17 +121,22 @@ class Boss(Actor):
         self.timer = 0
         self.magic = Actor('magic')
         self.magic_on = False
+        self.delta = 0
+        self.first_attach = True
 
 
     # 冲撞
     def attack1(self):
+        tls = [-100, 0, 100]
+        self.delta = random.choice(tls)
+        self.y += self.delta
         self.ahead()
         clock.schedule(self.back, 0.8)
     def ahead(self):
-        clock.schedule_interval(self.foreward, 1/100)
+        clock.schedule_interval(self.foreward, 1/80)
     def back(self):
         self.image = 'boss_right'
-        clock.schedule_interval(self.backward, 1/100)
+        clock.schedule_interval(self.backward, 1/80)
         clock.schedule(self.stop, 0.8)
     def foreward(self):
         self.x -= 15
@@ -141,6 +146,8 @@ class Boss(Actor):
         clock.unschedule(self.backward)
         clock.unschedule(self.foreward)
         self.image = 'boss'
+        self.y -= self.delta
+
 
     
     # 散射
@@ -171,8 +178,8 @@ class Boss(Actor):
 
 
     def call(self):
-        x = random.randint(100, 800)
-        y = random.randint(150, 430)
+        x = random.randint(50, 760)
+        y = random.randint(50, 610)
         type = random.randint(1, 5)
         boxes.append(Box(type, (x, y))) 
 
@@ -190,7 +197,7 @@ class Weapon(Actor):
         self.Note = Note # 武器信息
     
     def attack(self, pos):
-        global current_MP, animate_image_count, no_boss
+        global current_MP, animate_image_count, no_boss, boss
         if self.MP_consuming > current_MP:
             return
         current_MP -= self.MP_consuming
@@ -207,25 +214,35 @@ class Weapon(Actor):
                     (step == 6 and 30 <ang < 150) or 
                     (step == 7 and -150 <ang < -30)):
                         monster.HP.current_HP -= self.damage
+                        rate = 1
+                        if self.image == '剑2':
+                            rate = 2
                         if step == 4:
-                            monster.x += STANDARD_SPEED*10
+                            monster.x += STANDARD_SPEED*10*rate
                         elif step == 5:
-                            monster.x -= STANDARD_SPEED*10
+                            monster.x -= STANDARD_SPEED*10*rate
                         elif step == 6:
-                            monster.y -= STANDARD_SPEED*10
+                            monster.y -= STANDARD_SPEED*10*rate
                         elif step == 7:
-                            monster.y += STANDARD_SPEED*10
+                            monster.y += STANDARD_SPEED*10*rate
                         monster.HP.current_HP -= self.damage
                         if monster.HP.isdead():
                             monsters.remove(monster)
                         monster.animate_shake()
                         monster.beaten = True
-                if LEVEL == 4 and hero.distance_to(boss) < self.distance:
+            if LEVEL == 4:
+                if step == 4 and boss.collidepoint(hero.x + self.distance, hero.y):
+                    boss.HP.current_HP -= self.damage
+                elif step == 5 and boss.collidepoint(hero.x - self.distance, hero.y):
+                    boss.HP.current_HP -= self.damage
+                elif step == 6 and boss.collidepoint(hero.x, hero.y - self.distance):
+                    boss.HP.current_HP -= self.damage
+                elif step == 7 and boss.collidepoint(hero.x, hero.y + self.distance):
                     boss.HP.current_HP -= self.damage
                 if boss.HP.isdead():
                     no_boss = True
                     clock.unschedule(boss_attack) 
-                    
+                
         
         # 远程武器
         elif self.type == 2:
@@ -369,9 +386,9 @@ hero = Actor("prince")
 hero.bottomleft = 0, HEIGHT
 hero_HP = HP(float(dic['HP']), int(dic['LIFE']))  #初始化王子HP
 full_MP = float(dic['MP'])
+current_MP = full_MP
 HERO_SPEED = float(dic['HERO_SPEED'])
 HERO_SPEED_DICT = {4:(HERO_SPEED, 0), 5:(-HERO_SPEED, 0), 6:(0, -HERO_SPEED), 7:(0, HERO_SPEED)}
-current_MP = full_MP
 MP_RECOVERY_SPEED = float(dic['MP_RECOVERY_SPEED']) #每次刷新的MP恢复量
 monsters = []
 send = Actor('传送门')
@@ -384,6 +401,7 @@ step = 99
 Total = 3
 LEVEL = 4
 no_boss = True
+End = False
 
 # 箱子部分
 n = int(dic['BOX_NUM_LEVEL1'])
@@ -394,10 +412,16 @@ boxes = []
 ################各类函数##############################
 # 追逐函数
 def chase(a, b):
-    if b != None:
-        rand_ang = random.randint(-20, 20)
-        a.speed_x = STANDARD_SPEED **1.5 * math.cos(math.radians(a.angle_to(b)+rand_ang)) * a.speed_rate
-        a.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(a.angle_to(b)+rand_ang)) * a.speed_rate
+    if b is hero:
+        ang = random.randint(-20, 20) + a.angle_to(b)
+        a.speed_x = STANDARD_SPEED **1.5 * math.cos(math.radians(ang)) * a.speed_rate
+        a.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(ang)) * a.speed_rate
+    else: 
+        if b != None:
+            a.angle = a.angle_to(b)
+            ang = a.angle_to(b)
+            a.speed_x = STANDARD_SPEED **1.5 * math.cos(math.radians(ang)) * a.speed_rate
+            a.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(ang)) * a.speed_rate
     a.x += a.speed_x
     a.y += a.speed_y   
 
@@ -517,7 +541,6 @@ def construct_level():
         background1.topleft = 0, 0
         global no_boss
         no_boss = False
-        clock.schedule_interval(boss_attack, 2)
 
     elif LEVEL == 5:  
         endgamemode()
@@ -754,8 +777,11 @@ def update():
         if current_MP < full_MP:
             current_MP += MP_RECOVERY_SPEED
         if LEVEL == 4 and not no_boss:
+            if boss.first_attach and boss.HP.current_HP < boss.HP.full_HP:
+                clock.schedule_interval(boss_attack, 2)
+                boss.first_attach = False
             # 自动追踪弹
-            if hero.distance_to(boss.center) < 400 and boss.timer == 0:
+            if not boss.first_attach and hero.distance_to(boss.center) < 400 and boss.timer == 0:
                 b = Bullet('fireball', 450, 0.5, 1, 180)
                 tls = [boss.pos1, boss.pos2]
                 b.pos = random.choice(tls)
@@ -765,27 +791,30 @@ def update():
 
         #####子弹更新模块#####
         for i in bullets:
+            if WIDTH <= i.x or i.x <= 0 or HEIGHT <= i.y or i.y <= 0:
+                if i in bullets:
+                    bullets.remove(i)
             if i.trace:
                 chase(i, i.target)
             else:
                 i.x += i.speed_x
                 i.y += i.speed_y
             i.count_time += 1
-            if(i.count_time >= i.distance/STANDARD_SPEED**1.5):
+            if i.count_time >= i.distance/STANDARD_SPEED**1.5 and i in bullets:
                 bullets.remove(i)
             for monster in monsters:
                 if monster.colliderect(i):
                     monster.HP.current_HP -= i.damage
                     if i.image == '箭_ice':
                         clock.schedule(monster.reset_speed_rate, 3)
-                        monster.speed_rate *= 0.8
-                    if i.image != '长矛2_bullet':
+                        monster.speed_rate *= 0.5
+                    if i.image != '长矛2_bullet' and i in bullets: 
                         bullets.remove(i)
                     tone.play('A1', 0.1)
                     monster.animate_shake()
                 if monster.HP.isdead():
                     monsters.remove(monster)
-            if LEVEL == 4:
+            if LEVEL == 4 and not no_boss:
                 if boss.colliderect(i):
                     boss.HP.current_HP -= i.damage
                     bullets.remove(i)
@@ -799,18 +828,22 @@ def update():
                 i.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(ang) * i.speed_rate
             '''        
         for i in monster_bullets:
+            if WIDTH <= i.x or i.x <= 0 or HEIGHT <= i.y or i.y <= 0:
+                if i in monster_bullets:
+                    monster_bullets.remove(i)
             if i.trace == 1:
                 chase(i, hero)
-
-            else:            
+            else:
                 i.x += i.speed_x
                 i.y += i.speed_y
             i.count_time += 1
             if(i.count_time >= i.distance/STANDARD_SPEED**1.5):
-                monster_bullets.remove(i)
+                if i in monster_bullets:
+                    monster_bullets.remove(i)
             if hero.colliderect(i):
                 hero_HP.current_HP -= i.damage
-                monster_bullets.remove(i)
+                if i in monster_bullets:
+                    monster_bullets.remove(i)
         
         for monster in monsters:
             # 在一定距离内怪兽使用火球术 ~
@@ -881,44 +914,50 @@ def gamemode():
 
 ################结束游戏对白################
 def endgamemode():
-    global End, step
-    if End:
-        g.msgbox('恭喜您，打败恶龙昆图库塔卡提考特苏瓦西拉松\n'
-                 '的儿子\n'
-                 '尼普坤图库塔卡提考特苏瓦西拉松，\n'
-                 '赢得了解药！！！', '', image='images\medicine.png', ok_button='带解药回城')
-        g.msgbox(msg='你带着解药回到了蒙达鲁克硫斯伯古比奇巴勒城。\n'
-                     '见到了达拉崩吧斑得贝迪卜多比鲁翁和米娅莫拉苏娜丹妮谢莉红', title='', image='images\dog.png', ok_button='上前')
-        g.msgbox(msg='欸？您好！\n'
-                     '达拉崩吧斑得贝迪卜多比鲁翁陛下，米娅莫拉苏娜丹妮谢莉红王后\n'
-                     '解药也拿到了，我怎么回去啊？', title='王浩然', image='images\prince.png', ok_button='单膝跪地')
-        g.msgbox(msg='孩子，\n'
-                     '妈妈好想你啊！', title='米娅莫拉苏娜丹妮谢莉红王后', image='images\couple.png', ok_button='抱住王浩然痛哭')
-        g.msgbox(msg='孩子，\n'
-                     '谢谢你为我们的王国找回解药。\n', title='达拉崩吧斑得贝迪卜多比鲁翁', image='images\couple.png', ok_button='拍拍王浩然的肩膀')
-        g.msgbox(msg='那\n'
-                     '我怎么回去啊？\n'
-                     '我作业还没写完呢！', title='王浩然', image='images\prince.png', ok_button='焦急')
-        g.msgbox(msg='这个嘛，神奇博士会带你回去的！\n'
-                     '我知道，你们的那个世界也在经历着一场瘟疫。\n'
-                     '我希望，你能明白，现实的世界就和这场梦一样，\n'
-                     '只要你们勇敢地与病毒战斗，只要你们齐心协力，胜利终将到来！', title='达拉崩吧斑得贝迪卜多比鲁翁', image='images\couple.png',
-                 ok_button='微笑着点点头')
-        g.buttonbox(msg='你认为你是在做梦吗？\n', title='王浩然', choices=('相信自己就是在做梦', '不可能，这一定是真实的'))
-        g.msgbox(msg='王浩然！！！\n'
-                     '你在干嘛啊？\n'
-                     '代码写完了吗？\n'
-                     'ddl就要到了！！！', title='暑校python微信群', ok_button='原来你就是在做梦')
-        g.msgbox(msg='2020年7月13日0：01', title='时间', ok_button='大作业还没交呢！！！')
+    global step
+    g.msgbox('恭喜您，打败恶龙昆图库塔卡提考特苏瓦西拉松\n'
+                '的儿子\n'
+                '尼普坤图库塔卡提考特苏瓦西拉松，\n'
+                '赢得了解药！！！', '', image='images\medicine.png', ok_button='带解药回城')
+    g.msgbox(msg='你带着解药回到了蒙达鲁克硫斯伯古比奇巴勒城。\n'
+                    '见到了达拉崩吧斑得贝迪卜多比鲁翁和米娅莫拉苏娜丹妮谢莉红', title='', image='images\dog.png', ok_button='上前')
+    g.msgbox(msg='欸？您好！\n'
+                    '达拉崩吧斑得贝迪卜多比鲁翁陛下，米娅莫拉苏娜丹妮谢莉红王后\n'
+                    '解药也拿到了，我怎么回去啊？', title='王浩然', image='images\prince.png', ok_button='单膝跪地')
+    g.msgbox(msg='孩子，\n'
+                    '妈妈好想你啊！', title='米娅莫拉苏娜丹妮谢莉红王后', image='images\couple.png', ok_button='抱住王浩然痛哭')
+    g.msgbox(msg='孩子，\n'
+                    '谢谢你为我们的王国找回解药。\n', title='达拉崩吧斑得贝迪卜多比鲁翁', image='images\couple.png', ok_button='拍拍王浩然的肩膀')
+    g.msgbox(msg='那\n'
+                    '我怎么回去啊？\n'
+                    '我作业还没写完呢！', title='王浩然', image='images\prince.png', ok_button='焦急')
+    g.msgbox(msg='这个嘛，神奇博士会带你回去的！\n'
+                    '我知道，你们的那个世界也在经历着一场瘟疫。\n'
+                    '我希望，你能明白，现实的世界就和这场梦一样，\n'
+                    '只要你们勇敢地与病毒战斗，只要你们齐心协力，胜利终将到来！', title='达拉崩吧斑得贝迪卜多比鲁翁', image='images\couple.png',
+                ok_button='微笑着点点头')
+    g.buttonbox(msg='你认为你是在做梦吗？\n', title='王浩然', choices=('相信自己就是在做梦', '不可能，这一定是真实的'))
+    g.msgbox(msg='王浩然！！！\n'
+                    '你在干嘛啊？\n'
+                    '代码写完了吗？\n'
+                    'ddl就要到了！！！', title='暑校python微信群', ok_button='原来你就是在做梦')
+    g.msgbox(msg='2020年7月13日0：01', title='时间', ok_button='大作业还没交呢！！！')
 
-        # 选择
-        if g.ccbox('请做出选择', '', choices=('不管了，再来一局', '退出游戏，滚去学习')):
-
-            #####有bug
-            step = 1  # 进入游戏界面
-        # 退出程序
-        else:
-            sys.exit(0)
+    # 选择
+    if g.ccbox('请做出选择', '', choices=('不管了，再来一局', '退出游戏，滚去学习')):
+        global LEVEL, hero_HP,hero, HEIGHT, full_MP, current_MP, background1, coins
+        LEVEL = 1
+        construct_level()
+        hero_HP = HP(float(dic['HP']), int(dic['LIFE']))  #初始化王子HP
+        current_MP = full_MP
+        step = 1  # 进入游戏界面
+        background1.topleft = 0, 0
+        hero.bottomleft = 0, HEIGHT
+        coins = 0
+        #####有bug
+    # 退出程序
+    else:
+        sys.exit(0)
 
 
 pgzrun.go()
