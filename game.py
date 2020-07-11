@@ -648,7 +648,7 @@ def on_key_down(key):
     step = 0
     if key == keys.K_1:
         step = 1
-        gamemode()
+        #gamemode()
     elif key == keys.K_2:
         FM.close()
         FW.close()
@@ -739,6 +739,7 @@ def draw():
             if step == 7:
                 clock.schedule(down_movement, 0.01)
         screen.draw.text("Press Number 2 to exit the game", (800, 20), fontsize=25, color='orange')
+        screen.draw.text(f"Lives: {hero_HP.num - hero_HP.count + 1}", (375, 20), fontsize=40, color='red')
 
 
     # 游戏进行中
