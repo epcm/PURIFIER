@@ -1,19 +1,8 @@
-import pgzrun
-import csv
-import random
+# 标准速度
+STANDARD_SPEED = float(dic['STANDARD_SPEED'])
 
-standard_speed = 2
-
-a = Actor('red_dino')
-a.pos = 100, 100
-b = Actor('green_dino')
-b.pos = 50, 100
-animate(a, pos = (50, 100))
-
-def draw():
-    a.draw()
-    b.draw()
-    if a.collidepoint(b):
-        print(1)
-
-pgzrun.go()
+# 地图与背景
+background1 = Actor("bg1")  # 896, 448
+background1.topleft = 0, 0#background1.pos = 500, 300
+WIDTH = background1.width #+ 100
+HEIGHT = background1.height #+ 300

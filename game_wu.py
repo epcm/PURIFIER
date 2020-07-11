@@ -14,8 +14,8 @@ FG = open('GlobalConst.csv', encoding='utf-8-sig')
 pos = [(1000, 400), (1000, 300), (1000, 400), (1500, 600)]
 surface = Actor('purifier1')
 
-
 ###############类class######################
+
 
 # HP类，可用于王子及小怪
 class HP(object):
@@ -40,16 +40,19 @@ class HP(object):
 
 class Monster(Actor):
     # 参数传入亦可改写为args，更简洁美观，不过可读性下降
-    def __init__(self, image, full_HP, attack_distance, attack_damage, clash_damage, speed_rate, bullet_image,
-                 bullet_speed_rate, autochase_distance):
+    def __init__(self, image, full_HP, attack_distance, attack_damage,
+                 clash_damage, speed_rate, bullet_image, bullet_speed_rate,
+                 autochase_distance):
         super().__init__(image)
         self.list = []
         self.HP = HP(float(full_HP), 1)  # 血量类
         self.HP_bar = Rect((0, 0), (28, 5))  # 满血条
         self.currentHP_bar = Rect((0, 0), (28, 5))  # 血条
         self.speed_rate = float(speed_rate)  # 移动速度
-        self.speed_x = random.choice([1, -1]) * STANDARD_SPEED * self.speed_rate
-        self.speed_y = random.choice([1, -1]) * STANDARD_SPEED * self.speed_rate  # 速度
+        self.speed_x = random.choice([1, -1
+                                      ]) * STANDARD_SPEED * self.speed_rate
+        self.speed_y = random.choice(
+            [1, -1]) * STANDARD_SPEED * self.speed_rate  # 速度
         self.attack_distance = float(attack_distance)  # 攻击距离
         self.attack_damage = float(attack_damage)  # 攻击伤害
         self.beaten = False  # 击退状态
@@ -63,8 +66,8 @@ class Monster(Actor):
         self.beaten = False
 
     def attack(self):
-        b = Bullet(self.bullet_image, self.attack_distance, self.attack_damage, self.bullet_speed_rate,
-                   self.angle_to(hero))
+        b = Bullet(self.bullet_image, self.attack_distance, self.attack_damage,
+                   self.bullet_speed_rate, self.angle_to(hero))
         b.pos = self.pos
         monster_bullets.append(b)
 
@@ -77,33 +80,22 @@ class Monster(Actor):
         if not self.beaten:
             if self.distance_to(hero) < self.autochase_distance:
 
-                self.speed_x = STANDARD_SPEED ** 1.5 * math.cos(math.radians(self.angle_to(hero))) * self.speed_rate
-                self.speed_y = -STANDARD_SPEED ** 1.5 * math.sin(math.radians(self.angle_to(hero))) * self.speed_rate
+                self.speed_x = STANDARD_SPEED**1.5 * math.cos(
+                    math.radians(self.angle_to(hero))) * self.speed_rate
+                self.speed_y = -STANDARD_SPEED**1.5 * math.sin(
+                    math.radians(self.angle_to(hero))) * self.speed_rate
                 self.x += self.speed_x
                 self.y += self.speed_y
-                '''## 注意以下模块中speed维持非负
-                if self.x > hero.x:
-                    self.x -= self.speed_x
-                elif self.x < hero.x:
-                    self.x += self.speed_x
-                else:
-                    self.speed_y = STANDARD_SPEED ** 1.5 * self.speed_rate
-                self.speed_x = STANDARD_SPEED
-
-                if self.y > hero.y:
-                    self.y -= self.speed_y
-                elif self.y < hero.y:
-                    self.y += self.speed_y
-                else:
-                    self.speed_x = STANDARD_SPEED ** 1.5 * self.speed_rate
-                self.speed_y = STANDARD_SPEED'''
             else:
                 # 平均2s一次的随机转向
                 if random.randint(1, 120) == 1:
                     # ang = random.randint(-180, 180)
-                    ang = random.randint(0, 360)  # choice([0, 45, 90, 135, 180, 225, 270, 315])
-                    self.speed_x = STANDARD_SPEED ** 1.5 * math.cos(math.radians(ang)) * self.speed_rate
-                    self.speed_x = -STANDARD_SPEED ** 1.5 * math.sin(math.radians(ang)) * self.speed_rate
+                    ang = random.randint(
+                        0, 360)  # choice([0, 45, 90, 135, 180, 225, 270, 315])
+                    self.speed_x = STANDARD_SPEED**1.5 * math.cos(
+                        math.radians(ang)) * self.speed_rate
+                    self.speed_x = -STANDARD_SPEED**1.5 * math.sin(
+                        math.radians(ang)) * self.speed_rate
                 self.x += self.speed_x
                 self.y += self.speed_y
 
@@ -132,7 +124,8 @@ class Monster(Actor):
 
 
 class Weapon(Actor):
-    def __init__(self, image, type, distance, damage, price, MP_consuming, bullet_image, speed_rate, Note):
+    def __init__(self, image, type, distance, damage, price, MP_consuming,
+                 bullet_image, speed_rate, Note):
         super().__init__(image)
         self.type = int(type)  # 1为近战武器，2为远程武器
         self.distance = float(distance)  # 攻击距离
@@ -155,9 +148,9 @@ class Weapon(Actor):
                 if hero.distance_to(monster) < self.distance:
                     ang = hero.angle_to(monster)
                     if ((step == 4 and -60 < ang < 60) or
-                            (step == 5 and (120 < ang < 180 or -180 < ang < -120)) or
-                            (step == 6 and 30 < ang < 150) or
-                            (step == 7 and -150 < ang < -30)):
+                        (step == 5 and (120 < ang < 180 or -180 < ang < -120))
+                            or (step == 6 and 30 < ang < 150)
+                            or (step == 7 and -150 < ang < -30)):
                         monster.HP.current_HP -= self.damage
                         if step == 4:
                             monster.x += STANDARD_SPEED * 10
@@ -177,12 +170,17 @@ class Weapon(Actor):
 
         # 远程武器
         elif self.type == 2:
-            b = Bullet(self.bullet_image, self.distance, self.damage, self.speed_rate, hero.angle_to(pos))
+            b = Bullet(self.bullet_image, self.distance, self.damage,
+                       self.speed_rate, hero.angle_to(pos))
             b.pos = hero.pos
             bullets.append(b)
             if self is qiang1:
-                b1 = Bullet(self.bullet_image, self.distance, self.damage, self.speed_rate, hero.angle_to(pos) + 20)
-                b2 = Bullet(self.bullet_image, self.distance, self.damage, self.speed_rate, hero.angle_to(pos) - 20)
+                b1 = Bullet(self.bullet_image, self.distance, self.damage,
+                            self.speed_rate,
+                            hero.angle_to(pos) + 20)
+                b2 = Bullet(self.bullet_image, self.distance, self.damage,
+                            self.speed_rate,
+                            hero.angle_to(pos) - 20)
                 b1.pos = hero.pos
                 b2.pos = hero.pos
                 bullets.append(b1)
@@ -202,8 +200,10 @@ class Bullet(Actor):
         self.damage = damage
         self.distance = distance
         self.angle = ang
-        self.speed_x = STANDARD_SPEED ** 1.5 * math.cos(math.radians(ang)) * speed_rate
-        self.speed_y = -STANDARD_SPEED ** 1.5 * math.sin(math.radians(ang)) * speed_rate
+        self.speed_x = STANDARD_SPEED**1.5 * math.cos(
+            math.radians(ang)) * speed_rate
+        self.speed_y = -STANDARD_SPEED**1.5 * math.sin(
+            math.radians(ang)) * speed_rate
         self.count_time = 0  # 计时工具
         self.target = None  # 长矛1的跟踪对象
         self.speed_rate = speed_rate
@@ -264,7 +264,9 @@ bag_weapons = [fuzi, gong1]  # 已经拥有的武器
 bag_open = False
 
 # 武器
-weapons = [fuzi, gong1, gong2, jian1, jian2, qiang1, qiang2, changmao1, changmao2]
+weapons = [
+    fuzi, gong1, gong2, jian1, jian2, qiang1, qiang2, changmao1, changmao2
+]
 
 # 金币，商店页面控制
 coins = int(dic['coins'])
@@ -293,7 +295,12 @@ hero.pos = 100, 300
 hero_HP = HP(float(dic['HP']), int(dic['LIFE']))  # 初始化王子HP
 full_MP = float(dic['MP'])
 HERO_SPEED = float(dic['HERO_SPEED'])
-HERO_SPEED_DICT = {4: (HERO_SPEED, 0), 5: (-HERO_SPEED, 0), 6: (0, -HERO_SPEED), 7: (0, HERO_SPEED)}
+HERO_SPEED_DICT = {
+    4: (HERO_SPEED, 0),
+    5: (-HERO_SPEED, 0),
+    6: (0, -HERO_SPEED),
+    7: (0, HERO_SPEED)
+}
 current_MP = full_MP
 MP_RECOVERY_SPEED = float(dic['MP_RECOVERY_SPEED'])  # 每次刷新的MP恢复量
 monsters = []
@@ -303,8 +310,8 @@ isLoose = False
 start = False
 game = False
 step = 99
-Total = 0 #场上剩余怪物
-BoxTotal = 0 #场上开了的盒子要和n相同
+Total = 0  #场上剩余怪物
+BoxTotal = 0  #场上开了的盒子要和n相同
 
 # 箱子部分
 n = int(dic['box_num'])
@@ -313,7 +320,6 @@ print(f"box_set", n)
 boxes = []
 for _ in range(n):
     boxes.append(Actor('box_close'))
-
 '''class Actor(boxes):
     def __init__(self):
         self.open = False
@@ -321,13 +327,14 @@ for _ in range(n):
     def open(self):
         pass'''
 
-
 send = Actor('传送门')
 background1 = Actor('bg1')
 send.bottomright = 1200, 450  # send.pos = 700, 500
 
 #set是记录填充了的盒子
 set = [0] * n
+
+
 def Fill_box():
     for i in range(n):
         a = random.randint(100, 800)
@@ -383,8 +390,7 @@ def draw_status_bar():
     screen.blit('status_bar', (20, 20))
     screen.draw.filled_rect(currentHP_bar, 'red')
 
-    currentMP_bar = Rect(
-        (27, 54), (235 * current_MP / full_MP, 13))  # 当前血量
+    currentMP_bar = Rect((27, 54), (235 * current_MP / full_MP, 13))  # 当前血量
     screen.blit('status_bar', (20, 48))
     screen.draw.filled_rect(currentMP_bar, 'blue')
 
@@ -392,7 +398,8 @@ def draw_status_bar():
 # 画金币
 def draw_coins_bar():
     screen.blit('gloden', (20, 80))  # 20,60
-    screen.draw.text(str(coins), (125, 97), fontsize=50, color='gold')  # 125 77
+    screen.draw.text(str(coins), (125, 97), fontsize=50,
+                     color='gold')  # 125 77
 
 
 ### 上下左右行走模块函数 ###
@@ -433,6 +440,7 @@ def reset_step_store1():
 
 
 ############按键与鼠标#########################
+
 
 def on_mouse_down(pos, button):
     global coins
@@ -501,9 +509,12 @@ def draw():
         WIDTH = surface.width
         HEIGHT = surface.height
         surface.draw()
-        screen.draw.text(" Welcome to the Game of Purifier\n\n"
-                         " Press Number 1 to start the new game\n\n"
-                         " Press Number 2 to exit the game\n\n", (350, 500), fontsize=60, color="darkgoldenrod")
+        screen.draw.text(
+            " Welcome to the Game of Purifier\n\n"
+            " Press Number 1 to start the new game\n\n"
+            " Press Number 2 to exit the game\n\n", (350, 500),
+            fontsize=60,
+            color="darkgoldenrod")
         start = False
     else:
         start = True
@@ -515,7 +526,9 @@ def draw():
         screen.fill('white')
         background1.draw()
         hero.draw()
-        screen.draw.text("Press Number 2 to exit the game", (800, 20), fontsize=25, color='orange')
+        screen.draw.text("Press Number 2 to exit the game", (800, 20),
+                         fontsize=25,
+                         color='orange')
         for monster in monsters:
             monster.draw()
             screen.draw.filled_rect(monster.HP_bar, 'gray')
@@ -526,7 +539,10 @@ def draw():
             isLoose = True
             screen.clear()
             screen.fill('white')
-            screen.draw.text("You have lose your game, please exit!", (300, 300), fontsize=50, color="orange")
+            screen.draw.text("You have lose your game, please exit!",
+                             (300, 300),
+                             fontsize=50,
+                             color="orange")
             FM.close()
             FW.close()
             FG.close()
@@ -607,11 +623,18 @@ def draw():
     if step_store in range(2, 11) and not bag_open:
         Pur_button.draw()
         Pur_button.pos = (x2, y2)
-        screen.draw.text("Price: %d " % weapons[step_store - 2].price, (x1, y1), fontsize=50, color="gold")
-        screen.draw.text(weapons[step_store - 2].Note, (x0, y0), fontsize=50, color="gold")
+        screen.draw.text("Price: %d " % weapons[step_store - 2].price,
+                         (x1, y1),
+                         fontsize=50,
+                         color="gold")
+        screen.draw.text(weapons[step_store - 2].Note, (x0, y0),
+                         fontsize=50,
+                         color="gold")
 
     if step_store1 == 20:
-        screen.draw.text("Your coins are not ENOUGH!", (300, 400), fontsize=50, color="red")
+        screen.draw.text("Your coins are not ENOUGH!", (300, 400),
+                         fontsize=50,
+                         color="red")
 
     ####################update函数#################################
 
@@ -649,13 +672,13 @@ def update():
         for i in bullets:
             if i.image == '长矛1_bullet':
                 ang = i.angle_to(i.target)
-                i.speed_x = STANDARD_SPEED ** 1.5 * math.cos(math.radians(ang))
-                i.speed_y = -STANDARD_SPEED ** 1.5 * math.sin(math.radians(ang))
+                i.speed_x = STANDARD_SPEED**1.5 * math.cos(math.radians(ang))
+                i.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(ang))
                 i.angle = ang
             i.x += i.speed_x
             i.y += i.speed_y
             i.count_time += 1
-            if (i.count_time >= i.distance / STANDARD_SPEED ** 1.5):
+            if (i.count_time >= i.distance / STANDARD_SPEED**1.5):
                 bullets.remove(i)
             for monster in monsters:
                 if monster.colliderect(i):
@@ -676,7 +699,7 @@ def update():
             i.x += i.speed_x
             i.y += i.speed_y
             i.count_time += 1
-            if (i.count_time >= i.distance / STANDARD_SPEED ** 1.5):
+            if (i.count_time >= i.distance / STANDARD_SPEED**1.5):
                 monster_bullets.remove(i)
             if hero.colliderect(i):
                 hero_HP.current_HP -= i.damage
@@ -738,6 +761,7 @@ def update():
             if hero.colliderect(boxes[i]):
                 boxes[i].image = 'box_open'
 
+
 ###Boss绘画####
 def Boss():
     r = random.randint(0, 30)
@@ -758,33 +782,66 @@ def gamemode():
     global step, game
     while not game:
         # 有两个参数，第一个是文字，第二个是标题
-        g.msgbox('公元前2020年，王国遭遇了一场前所未有的新型瘟疫。\n'
-                 '越来越多的人染上瘟疫，一时间，民不聊生。\n'
-                 '一个自称神奇博士的人找到他，声称这场瘟疫是远方山洞的一条恶龙所为，而恶龙身上的鳞片则是瘟疫的解药。\n'
-                 '为了解救人民，王浩然带上最好的武器，踏上了征程。', '前情概要', ok_button='继续')
+        g.msgbox(
+            '公元前2020年，王国遭遇了一场前所未有的新型瘟疫。\n'
+            '越来越多的人染上瘟疫，一时间，民不聊生。\n'
+            '一个自称神奇博士的人找到他，声称这场瘟疫是远方山洞的一条恶龙所为，而恶龙身上的鳞片则是瘟疫的解药。\n'
+            '为了解救人民，王浩然带上最好的武器，踏上了征程。',
+            '前情概要',
+            ok_button='继续')
 
         # 选择
         # 想要导入图片, 我先看看什么办法，现在无法导入gif图片，有解决办法告诉你
         g.msgbox(msg='你是王浩然，一名b大学生，最近正为了暑校typhon课程的大作业忙得昏头昏脑。\n'
-                     '这天，一名自称来自公元前2020年的神奇博士找到了你！', title='身份介绍', image='images\prince.png', ok_button='听他说')
+                 '这天，一名自称来自公元前2020年的神奇博士找到了你！',
+                 title='身份介绍',
+                 image='images\prince.png',
+                 ok_button='听他说')
         g.msgbox(msg='   王浩然！\n'
-                     '只有你才能突破封印，进入恶龙的洞穴，拿到解药，解救大家啊！', title='神奇博士', image='images\professor.png', ok_button=('继续听他啰嗦'))
+                 '只有你才能突破封印，进入恶龙的洞穴，拿到解药，解救大家啊！',
+                 title='神奇博士',
+                 image='images\professor.png',
+                 ok_button=('继续听他啰嗦'))
         g.msgbox(msg='拜托。我只是个学生。\n'
-                     '还有，虽然我很中二，但是不二。别拿这么假的骗术糊弄我！！！', title='王浩然', image='images\prince.png', ok_button='转身离去')
+                 '还有，虽然我很中二，但是不二。别拿这么假的骗术糊弄我！！！',
+                 title='王浩然',
+                 image='images\prince.png',
+                 ok_button='转身离去')
         g.msgbox(msg='你身上流淌着勇者的血脉，应当肩负起拯救人民的重任。\n'
-                     '哎，你别走啊。我费了老大劲穿越回来找你的！', title='神奇博士', image='images\professor.png', ok_button='一把拉住王浩然')
+                 '哎，你别走啊。我费了老大劲穿越回来找你的！',
+                 title='神奇博士',
+                 image='images\professor.png',
+                 ok_button='一把拉住王浩然')
         g.msgbox(msg='什么勇者的血脉……\n'
-                     '还穿越？你小说看多了吧！', title='王浩然', image='images\prince.png', ok_button='挣脱着想要离开')
-        g.msgbox(msg='你知道你的父亲叫什么吗？', title='神奇博士', image='images\professor.png', ok_button='生气的甩开王浩然')
+                 '还穿越？你小说看多了吧！',
+                 title='王浩然',
+                 image='images\prince.png',
+                 ok_button='挣脱着想要离开')
+        g.msgbox(msg='你知道你的父亲叫什么吗？',
+                 title='神奇博士',
+                 image='images\professor.png',
+                 ok_button='生气的甩开王浩然')
         g.msgbox(msg='真是越说越离谱了，没什么事我去敲代码了。\n'
-                     '虽然你是个骗子，不过挺有趣的。赶紧去大医院看看脑子哈！', title='王浩然', image='images\prince.png', ok_button='同情地拍了拍神奇博士')
+                 '虽然你是个骗子，不过挺有趣的。赶紧去大医院看看脑子哈！',
+                 title='王浩然',
+                 image='images\prince.png',
+                 ok_button='同情地拍了拍神奇博士')
         g.msgbox(msg='你的父亲俗名叫王建国，\n'
-                     '其实他还有另一个名字，达拉崩吧斑得贝迪卜多比鲁翁，\n'
-                     '……\n'
-                     '他斩杀了恶龙，成功地救出了公主，也就是你的母亲。\n'
-                     '你的母亲叫米娅莫拉苏娜丹妮谢莉红。', title='神奇博士', image='images\professor.png', ok_button='一脸自信地点点头')
-        g.msgbox(msg='………………', title='', image='images\prince.png', ok_button='一脸茫然')
-        g.msgbox(msg='你跟我来！', title='', image='images\professor.png', ok_button='拉着王浩然向有名湖旁的小树林走去')
+                 '其实他还有另一个名字，达拉崩吧斑得贝迪卜多比鲁翁，\n'
+                 '……\n'
+                 '他斩杀了恶龙，成功地救出了公主，也就是你的母亲。\n'
+                 '你的母亲叫米娅莫拉苏娜丹妮谢莉红。',
+                 title='神奇博士',
+                 image='images\professor.png',
+                 ok_button='一脸自信地点点头')
+        g.msgbox(msg='………………',
+                 title='',
+                 image='images\prince.png',
+                 ok_button='一脸茫然')
+        g.msgbox(msg='你跟我来！',
+                 title='',
+                 image='images\professor.png',
+                 ok_button='拉着王浩然向有名湖旁的小树林走去')
 
         # 选择
         if g.ccbox('请做出决定', '', choices=('跟他去一探究竟', '不去不去，他是个大骗子')):
@@ -796,36 +853,62 @@ def gamemode():
 
 ###########################################
 
+
 ################结束游戏对白################
 def endgamemode():
     global End, step
     if End:
-        g.msgbox('恭喜您，打败恶龙昆图库塔卡提考特苏瓦西拉松\n'
-                 '的儿子\n'
-                 '尼普坤图库塔卡提考特苏瓦西拉松，\n'
-                 '赢得了解药！！！', '', image='images\medicine.png', ok_button='带解药回城')
+        g.msgbox(
+            '恭喜您，打败恶龙昆图库塔卡提考特苏瓦西拉松\n'
+            '的儿子\n'
+            '尼普坤图库塔卡提考特苏瓦西拉松，\n'
+            '赢得了解药！！！',
+            '',
+            image='images\medicine.png',
+            ok_button='带解药回城')
         g.msgbox(msg='你带着解药回到了蒙达鲁克硫斯伯古比奇巴勒城。\n'
-                     '见到了达拉崩吧斑得贝迪卜多比鲁翁和米娅莫拉苏娜丹妮谢莉红', title='', image='images\dog.png', ok_button='上前')
+                 '见到了达拉崩吧斑得贝迪卜多比鲁翁和米娅莫拉苏娜丹妮谢莉红',
+                 title='',
+                 image='images\dog.png',
+                 ok_button='上前')
         g.msgbox(msg='欸？您好！\n'
-                     '达拉崩吧斑得贝迪卜多比鲁翁陛下，米娅莫拉苏娜丹妮谢莉红王后\n'
-                     '解药也拿到了，我怎么回去啊？', title='王浩然', image='images\prince.png', ok_button='单膝跪地')
+                 '达拉崩吧斑得贝迪卜多比鲁翁陛下，米娅莫拉苏娜丹妮谢莉红王后\n'
+                 '解药也拿到了，我怎么回去啊？',
+                 title='王浩然',
+                 image='images\prince.png',
+                 ok_button='单膝跪地')
         g.msgbox(msg='孩子，\n'
-                     '妈妈好想你啊！', title='米娅莫拉苏娜丹妮谢莉红王后', image='images\couple.png', ok_button='抱住王浩然痛哭')
+                 '妈妈好想你啊！',
+                 title='米娅莫拉苏娜丹妮谢莉红王后',
+                 image='images\couple.png',
+                 ok_button='抱住王浩然痛哭')
         g.msgbox(msg='孩子，\n'
-                     '谢谢你为我们的王国找回解药。\n', title='达拉崩吧斑得贝迪卜多比鲁翁', image='images\couple.png', ok_button='拍拍王浩然的肩膀')
+                 '谢谢你为我们的王国找回解药。\n',
+                 title='达拉崩吧斑得贝迪卜多比鲁翁',
+                 image='images\couple.png',
+                 ok_button='拍拍王浩然的肩膀')
         g.msgbox(msg='那\n'
-                     '我怎么回去啊？\n'
-                     '我作业还没写完呢！', title='王浩然', image='images\prince.png', ok_button='焦急')
+                 '我怎么回去啊？\n'
+                 '我作业还没写完呢！',
+                 title='王浩然',
+                 image='images\prince.png',
+                 ok_button='焦急')
         g.msgbox(msg='这个嘛，神奇博士会带你回去的！\n'
-                     '我知道，你们的那个世界也在经历着一场瘟疫。\n'
-                     '我希望，你能明白，现实的世界就和这场梦一样，\n'
-                     '只要你们勇敢地与病毒战斗，只要你们齐心协力，胜利终将到来！', title='达拉崩吧斑得贝迪卜多比鲁翁', image='images\couple.png',
+                 '我知道，你们的那个世界也在经历着一场瘟疫。\n'
+                 '我希望，你能明白，现实的世界就和这场梦一样，\n'
+                 '只要你们勇敢地与病毒战斗，只要你们齐心协力，胜利终将到来！',
+                 title='达拉崩吧斑得贝迪卜多比鲁翁',
+                 image='images\couple.png',
                  ok_button='微笑着点点头')
-        g.buttonbox(msg='你认为你是在做梦吗？\n', title='王浩然', choices=('相信自己就是在做梦', '不可能，这一定是真实的'))
+        g.buttonbox(msg='你认为你是在做梦吗？\n',
+                    title='王浩然',
+                    choices=('相信自己就是在做梦', '不可能，这一定是真实的'))
         g.msgbox(msg='王浩然！！！\n'
-                     '你在干嘛啊？\n'
-                     '代码写完了吗？\n'
-                     'ddl就要到了！！！', title='暑校python微信群', ok_button='原来你就是在做梦')
+                 '你在干嘛啊？\n'
+                 '代码写完了吗？\n'
+                 'ddl就要到了！！！',
+                 title='暑校python微信群',
+                 ok_button='原来你就是在做梦')
         g.msgbox(msg='2020年7月13日0：01', title='时间', ok_button='大作业还没交呢！！！')
 
         # 选择

@@ -11,10 +11,14 @@ TITLE = "The Game of Purifier"
 FM = open('Monsters.csv', encoding = 'utf-8-sig')
 FW = open('Weapons.csv', encoding = 'utf-8-sig')
 FG = open('GlobalConst.csv', encoding = 'utf-8-sig')
+FGreader = csv.DictReader(FG)
+dic = next(FGreader)
+ls_monster = list(csv.reader(FM))
+ls = list(csv.reader(FW))
 music.play('达拉崩吧')
-pos = [(1000, 400), (1000, 400), (600, 300), (600, 300)]
 surface = Actor('purifier1')
-
+pos = [(1000, 400), (1000, 400), (600, 300), (600, 300)]
+###############游戏控制模块##################
 
 ###############类class######################
 
@@ -164,24 +168,26 @@ class Boss(Actor):
 
     # 冲撞
     def attack1(self):
-        tls = [-100, 0, 100]
-        self.delta = random.choice(tls)
+        tls = [-150, 150]
+        self.delta = random.choice(tls) # 选择冲撞位置
         self.y += self.delta
         self.ahead()
         clock.schedule(self.back, 0.8)
     def ahead(self):
         clock.schedule_interval(self.foreward, 1/80)
+        clock.schedule(self.stop_foreward, 0.8)        
     def back(self):
-        self.image = 'boss_right'
         clock.schedule_interval(self.backward, 1/80)
-        clock.schedule(self.stop, 0.8)
+        clock.schedule(self.stop_backward, 0.8)
     def foreward(self):
         self.x -= 15
     def backward(self):
-        self.x += 30
-    def stop(self):
-        clock.unschedule(self.backward)
+        self.x += 15
+    def stop_foreward(self):
         clock.unschedule(self.foreward)
+        self.image = 'boss_right'
+    def stop_backward(self):
+        clock.unschedule(self.backward)
         self.image = 'boss'
         self.y -= self.delta
 
@@ -359,10 +365,7 @@ class Box(Actor):
 
 
 ##################全局变量global##########################
-FGreader = csv.DictReader(FG)
-dic = next(FGreader)
-ls_monster = list(csv.reader(FM))
-ls = list(csv.reader(FW))
+
 
 # 武器模块
 # 参数依次为 image, type, distance, damage, price, MP_consuming

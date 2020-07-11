@@ -1,4 +1,4 @@
-### PURIFIER非正式官方指南
+## PURIFIER非正式官方指南
 
 欢迎来到PURIFIER！
 
@@ -64,12 +64,12 @@
 
 #### 怪兽图鉴
 
-| 名称                                                         | HP   | 速度 | 开始追击距离 | 攻击伤害 | 攻击的速度 | 攻击的距离 | 碰撞伤害 | 备注                          |
-| ------------------------------------------------------------ | ---- | ---- | ------------ | -------- | ---------- | ---------- | -------- | ----------------------------- |
-| ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/orange_dino.png)orange | 5    | 1.5  | 200          | 1        | 1.2        | 220        | 3/s      | 高速移动+随机转向             |
-| ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/green_dino.png)green | 5    | 1    | 200          | 1        | 1.5        | 220        | 3/s      | 高速攻击+随机转向             |
-| ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/red_dino.png)red | 5    | 1    | 200          | 1.5      | 1.2        | 220        | 3/s      | 高伤害+随机转向               |
-| ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/minotaur.png)minotaur | 10   | 1    | 200          | 2.5      | 1.2        | 220        | 6/s      | 血厚、伤害高+未靠近时规则运动 |
+| 名称                                                         | HP   | 速度 | 开始追击距离 | 攻击伤害 | 攻击的速度 | 攻击的距离 | 碰撞伤害 | 备注                                    |
+| ------------------------------------------------------------ | ---- | ---- | ------------ | -------- | ---------- | ---------- | -------- | --------------------------------------- |
+| ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/orange_dino.png)orange | 5    | 1.5  | 200          | 1        | 1.2        | 220        | 3/s      | 高速移动+随机转向                       |
+| ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/green_dino.png)green | 5    | 1    | 200          | 1        | 1.5        | 220        | 3/s      | 高速攻击+随机转向                       |
+| ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/red_dino.png)red | 5    | 1    | 200          | 1.5      | 1.2        | 220        | 3/s      | 高伤害+随机转向                         |
+| ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/minotaur.png)minotaur | 10   | 1    | 200          | 2.5      | 1.2        | 220        | 6/s      | 血厚、伤害高+玩家未靠近时按固定轨迹运动 |
 
 #### Boss恶龙
 
