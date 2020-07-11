@@ -12,7 +12,7 @@ FM = open('Monsters.csv', encoding = 'utf-8-sig')
 FW = open('Weapons.csv', encoding = 'utf-8-sig')
 FG = open('GlobalConst.csv', encoding = 'utf-8-sig')
 music.play('达拉崩吧')
-pos = [(1000, 400), (1000, 400), (1000, 300), (600, 300)]
+pos = [(1000, 400), (1000, 400), (600, 300), (600, 300)]
 surface = Actor('purifier1')
 
 
@@ -213,9 +213,9 @@ class Boss(Actor):
             b.pos = x, y
             monster_bullets.append(b)
 
-
+    # 召唤
     def call(self):
-        if random.randint(1, 5) == 1:
+        if random.randint(1, 15) == 1:
             x = random.randint(200, 700)
             y = random.randint(150, 510)
             mon = Minotaur(*ls_monster[4])
@@ -257,7 +257,6 @@ class Weapon(Actor):
                     (step == 5 and (120 <ang < 180 or -180< ang < -120)) or 
                     (step == 6 and 30 <ang < 150) or 
                     (step == 7 and -150 <ang < -30)):
-                        monster.HP.current_HP -= self.damage
                         rate = 1
                         if self.image == '剑2':
                             rate = 2
@@ -443,9 +442,10 @@ isLoose = False
 game = False
 step = 99
 Total = 3
-LEVEL = 1
+LEVEL = 4
 no_boss = True
 End = False
+a = ''
 
 # 箱子部分
 n = int(dic['BOX_NUM_LEVEL1'])
@@ -654,6 +654,9 @@ def on_key_down(key):
         FW.close()
         FG.close()
         exit()
+    elif key == keys.K_3:
+        tutorial()
+
 
 #### 切换武器
 def on_key_up(key):
@@ -662,19 +665,32 @@ def on_key_up(key):
         current_weapon_id = (1 + current_weapon_id) % 2
         current_weapon = weapons_on_bar[current_weapon_id]
 
+
+######开始的矩形函数#######
+def actionbar():
+    ActionBar1 = Rect((210, 476), (1100, 80))
+    ActionBar2 = Rect((210, 650), (920, 80))
+    #ActionBar3 = Rect((210, 300), (900, 80))
+    screen.draw.filled_rect(ActionBar1, color=(0,0,0))
+    screen.draw.filled_rect(ActionBar2, color=(0,0,0))
+
+############################
+
 ########################draw函数###########################
 
 
 def draw():
     global step, isLoose, game, WIDTH, HEIGHT, LEVEL
-    screen.fill('white')
+    screen.fill('deepskyblue')
     if step != 1 and step != 2:
         WIDTH = surface.width
         HEIGHT = surface.height
         surface.draw()
-        screen.draw.text(" Welcome to the Game of Purifier\n\n"
-                         " Press Number 1 to start the new game\n\n"
-                         " Press Number 2 to exit the game\n\n", (350, 500), fontsize=60, color="darkgoldenrod")
+        actionbar()
+        screen.draw.text(" Welcome to the Game of Purifier\n\n\n"
+                         " Press Number 1 to start the new game\n\n\n"
+                         " Press Number 2 to exit the game\n\n", (200, 310), fontname='09', fontsize=60, color=(195,44,2))
+       
     else:
         game = True
     if game:
@@ -684,7 +700,7 @@ def draw():
         screen.fill('white')
         background1.draw()
         hero.draw()
-        screen.draw.text("Press Number 2 to exit the game", (800, 20), fontsize=25, color='orange')
+       #screen.draw.text("Press Number 2 to exit the game", (800, 20), fontsize=25, color='orange')
         for monster in monsters:
             monster.draw()
             screen.draw.filled_rect(monster.HP_bar, 'gray')
@@ -722,6 +738,7 @@ def draw():
                 clock.schedule(up_movement, 0.01)
             if step == 7:
                 clock.schedule(down_movement, 0.01)
+        screen.draw.text("Press Number 2 to exit the game", (800, 20), fontsize=25, color='orange')
 
 
     # 游戏进行中
@@ -807,6 +824,7 @@ def draw():
     if step_store1 == 20:
         screen.draw.text("Your coins are not ENOUGH!",(300,400),fontsize=50,color = "red")
 
+
     ####################update函数#################################
 
 def update():
@@ -877,7 +895,8 @@ def update():
             if LEVEL == 4 and not no_boss:
                 if boss.colliderect(i):
                     boss.HP.current_HP -= i.damage
-                    bullets.remove(i)
+                    if i.image != '长矛2_bullet' and i in bullets: 
+                        bullets.remove(i)
                 if boss.HP.isdead():
                     no_boss = True
                     clock.unschedule(boss_attack)     
@@ -899,7 +918,7 @@ def update():
                 if i.image == 'axe':
                     i.angle += 3
             i.count_time += 1
-            if(i.count_time >= i.distance/STANDARD_SPEED**1.5):
+            if i.count_time >= i.distance/STANDARD_SPEED**1.5:
                 if i in monster_bullets:
                     monster_bullets.remove(i)
             if hero.colliderect(i):
@@ -966,6 +985,9 @@ def gamemode():
 
         # 选择
         if g.ccbox('请做出决定', '', choices=('跟他去一探究竟', '不去不去，他是个大骗子')):
+            global a
+            a = g.enterbox(msg="请输入你的名字", title="勇士的名字")
+            tutorial()
             return
         # 退出程序
         else:
@@ -977,7 +999,7 @@ def gamemode():
 ################结束游戏对白################
 def endgamemode():
     global step
-    g.msgbox('恭喜您，打败恶龙昆图库塔卡提考特苏瓦西拉松\n'
+    g.msgbox('恭喜您，打败恶龙昆图库塔卡提考特苏瓦西拉松\n\n'
                 '的儿子\n'
                 '尼普坤图库塔卡提考特苏瓦西拉松，\n'
                 '赢得了解药！！！', '', image='images\medicine.png', ok_button='带解药回城')
@@ -1020,6 +1042,26 @@ def endgamemode():
     # 退出程序
     else:
         sys.exit(0)
+
+
+############操作介绍#########
+def tutorial():
+    global step, a
+    g.msgbox(msg="单击鼠标左键进行攻击\n\n"
+                    "按 Q 键实现左上角武器栏中的武器切换\n\n"
+                    "当你使用斧头，剑等近程武器时，攻击方向为当前角色的朝向\n"
+                    "使用枪，长矛等远程射击或投掷武器时，攻击方向为鼠标点击的方向\n"
+                    "每次使用武器时都会消耗MP（即为蓝条），MP的恢复需要一定时间，所以请不要进行过于频繁的攻击哦~~~\n\n"
+                    "点击右上角的商店图标以购买武器，点击左上角的武器栏可以进入背包以更换武器，鼠标右键返回上一层\n\n"
+                    "当你碰到宝箱时它会自动打开，在打开所有宝箱并消灭所有怪物时传送门就会出现，通过传送门进入下一关\n\n"
+                    "游戏中按下数字键3可以再次查看操作介绍\n\n"
+                    f"{a}你准备好去寻找解药，拯救王国了吗？快开始你的冒险吧！\n",title='操作介绍',  ok_button='冲啊')
+    if g.ccbox('闯关之前'f'{a}，你懂得如何正确杀敌了嘛', '', choices=('等等我还没搞懂?', '我准备好冒险了!')):
+        tutorial()
+    else:
+        return
+
+
 
 
 pgzrun.go()

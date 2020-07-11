@@ -1,5 +1,5 @@
 ﻿image,full_HP,attack_distance,attack_damage,clash_damage,speed_rate,bullet_image,bullet_speed_rate,autochase_distance
-orange_dino,5,220,1.5,0.05,1,fireball,1,200
+orange_dino,5,220,1.5,0.05,1.2,fireball,1,200
 green_dino,5,220,1,0.05,1,leaf,1.5,200
-red_dino,5,220,1,0.05,1,fireball1,1,200
-minotaur,10,100,2.5,0.05,0.8,axe,0.8,200
+red_dino,5,220,1,0.05,1,fireball1,1.2,200
+minotaur,10,220,2.5,0.1,1,axe,1.2,200
