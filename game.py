@@ -11,7 +11,7 @@ TITLE = "The Game of Purifier"
 FM = open('Monsters.csv', encoding = 'utf-8-sig')
 FW = open('Weapons.csv', encoding = 'utf-8-sig')
 FG = open('GlobalConst.csv', encoding = 'utf-8-sig')
-#music.play('达拉崩吧')
+music.play('达拉崩吧')
 pos = [(1000, 400), (1000, 400), (1000, 300), (600, 300)]
 surface = Actor('purifier1')
 
@@ -109,6 +109,43 @@ class Monster(Actor):
     # 从迟缓状态恢复
     def reset_speed_rate(self):
         self.speed_rate /= 0.5
+# 牛头怪
+class Minotaur(Monster):
+    def __init__(self, image, full_HP, attack_distance,attack_damage,clash_damage,speed_rate,
+            bullet_image,bullet_speed_rate,autochase_distance):
+        super().__init__(image, full_HP, attack_distance,attack_damage,clash_damage,speed_rate,
+            bullet_image,bullet_speed_rate,autochase_distance)
+        self.land_center = 0,0
+        self.land_radius = 150
+        self.mod1e = 1
+        self.HP_bar = Rect((0, 0), (63, 10)) # 满血条
+        self.currentHP_bar = Rect((0, 0), (63, 10)) # 血条
+
+    def move(self):
+        self.HP_bar.bottomleft = self.topleft
+        self.currentHP_bar.width = 63 * self.HP.current_HP / self.HP.full_HP
+        self.currentHP_bar.bottomleft = self.topleft
+        
+        if not self.beaten:
+            if self.distance_to(hero) < self.autochase_distance:
+                chase(self, hero)         
+            else:
+                if self.distance_to(self.land_center) > self.land_radius + 20:
+                    ang = self.angle_to(self.land_center)
+                elif self.distance_to(self.land_center) < self.land_radius - 20:
+                    ang = self.angle_to(self.land_center) + 180
+                else:
+                    ang = self.angle_to(self.land_center)-90
+                self.speed_x = STANDARD_SPEED ** 1.5 * math.cos(math.radians(ang)) * self.speed_rate
+                self.speed_y = -STANDARD_SPEED ** 1.5 * math.sin(math.radians(ang)) * self.speed_rate
+
+                self.x += self.speed_x
+                self.y += self.speed_y
+
+        if WIDTH <= self.right or self.left <= 0:
+            self.speed_x *= -1
+        if HEIGHT <= self.bottom or self.top <= 0:
+            self.speed_y *= -1
 
 class Boss(Actor):
     def __init__(self):
@@ -178,6 +215,13 @@ class Boss(Actor):
 
 
     def call(self):
+        if random.randint(1, 5) == 1:
+            x = random.randint(200, 700)
+            y = random.randint(150, 510)
+            mon = Minotaur(*ls_monster[4])
+            mon.land_center = x, y
+            mon.pos = mon.land_center[0] + mon.land_radius, mon.land_center[1]
+            monsters.append(mon)    
         x = random.randint(50, 760)
         y = random.randint(50, 610)
         type = random.randint(1, 5)
@@ -302,12 +346,12 @@ class Box(Actor):
             mon = Monster(*ls_monster[3])
             mon.pos = self.pos
             monsters.append(mon)
-        elif self.type == 4 or type == 5:
+        elif self.type == 4 or self.type == 5:
             self.image = 'golden_coin'
-            number = random.randint(20, 40)
+            number = random.randint(20, 30)
             coins += number
-        elif self.type == 6:
-            mon = Monster(*ls_monster[4])
+        '''elif self.type == 6:
+            mon = Monster(*ls_monster[4])'''
         clock.schedule(self.remove_self, 1)
 
     def remove_self(self):
@@ -399,7 +443,7 @@ isLoose = False
 game = False
 step = 99
 Total = 3
-LEVEL = 4
+LEVEL = 1
 no_boss = True
 End = False
 
@@ -413,7 +457,7 @@ boxes = []
 # 追逐函数
 def chase(a, b):
     if b is hero:
-        ang = random.randint(-20, 20) + a.angle_to(b)
+        ang = random.randint(-40, 40) + a.angle_to(b)
         a.speed_x = STANDARD_SPEED **1.5 * math.cos(math.radians(ang)) * a.speed_rate
         a.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(ang)) * a.speed_rate
     else: 
@@ -509,10 +553,10 @@ def construct_level():
     if LEVEL == 1:
         send.pos = pos[0][0], pos[0][1]
         background1.image = 'bg1'
-        n = int(dic['BOX_NUM_LEVEL1'])
+        n = int(dic['BOX_NUM_LEVEL1'])     
         for i in range(n):
-            x = random.randint(100, 800)
-            y = random.randint(150, 430)
+            x = random.randint(100, 1100)
+            y = random.randint(50, 430)
             type = random.randint(1, 5)
             boxes.append(Box(type, (x, y))) 
 
@@ -524,7 +568,13 @@ def construct_level():
             x = random.randint(100, 800)
             y = random.randint(150, 430)
             type = random.randint(1, 5)
-            boxes.append(Box(type, (x, y))) 
+            boxes.append(Box(type, (x, y)))
+        x = random.randint(400, 800)
+        y = random.randint(150, 280)
+        mon = Minotaur(*ls_monster[4])
+        mon.land_center = x, y
+        mon.pos = mon.land_center[0] + mon.land_radius, mon.land_center[1]
+        monsters.append(mon)    
 
     elif LEVEL == 3:
         send.pos = pos[2][0], pos[2][1]
@@ -534,6 +584,16 @@ def construct_level():
             y = random.randint(150, 430)
             type = random.randint(1, 5)
             boxes.append(Box(type, (x, y))) 
+            x1 = random.randint(400, 600)
+            y1 = random.randint(150, 210)
+            x2 = random.randint(600, 800)
+            y2 = random.randint(210, 280)
+            minotaur_pos = [(x1, y1), (x2, y2)]
+        for i in range(2):
+            mon = Minotaur(*ls_monster[4])
+            mon.land_center = minotaur_pos[i]
+            mon.pos = mon.land_center[0] + mon.land_radius, mon.land_center[1]
+            monsters.append(mon)  
 
     elif LEVEL == 4:
         send.pos = pos[3][0], pos[3][1]
@@ -588,7 +648,7 @@ def on_key_down(key):
     step = 0
     if key == keys.K_1:
         step = 1
-        #gamemode()
+        gamemode()
     elif key == keys.K_2:
         FM.close()
         FW.close()
@@ -836,6 +896,8 @@ def update():
             else:
                 i.x += i.speed_x
                 i.y += i.speed_y
+                if i.image == 'axe':
+                    i.angle += 3
             i.count_time += 1
             if(i.count_time >= i.distance/STANDARD_SPEED**1.5):
                 if i in monster_bullets:
@@ -861,7 +923,7 @@ def update():
     #### 碰撞伤害 ######
     for monster in monsters:
         if hero.colliderect(monster):
-            #tone.play('G2', 0.1)
+            tone.play('G2', 0.1)
             hero_HP.current_HP -= monster.clash_damage
     if not no_boss and hero.colliderect(boss):
             #tone.play('G2', 0.1)
