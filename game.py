@@ -7,7 +7,9 @@ import math
 import easygui as g
 import sys
 
+##############全局共用的部分###################
 TITLE = "The Game of Purifier"
+# 打开csv文件
 FM = open('Monsters.csv', encoding = 'utf-8-sig')
 FW = open('Weapons.csv', encoding = 'utf-8-sig')
 FG = open('GlobalConst.csv', encoding = 'utf-8-sig')
@@ -15,14 +17,15 @@ FGreader = csv.DictReader(FG)
 dic = next(FGreader)
 ls_monster = list(csv.reader(FM))
 ls = list(csv.reader(FW))
+
 music.play('达拉崩吧')
-surface = Actor('purifier1')
-pos = [(1000, 400), (1000, 400), (600, 300), (600, 300)]
-###############游戏控制模块##################
 
-###############类class######################
+# 标准速度
+STANDARD_SPEED = float(dic['STANDARD_SPEED'])
+# 金币
+coins = int(dic['coins'])
 
-# HP类，可用于王子及小怪
+# HP类，可用于敌我角色
 class HP(object):
     def __init__(self, full_HP, num):
         self.full_HP = full_HP
@@ -41,14 +44,170 @@ class HP(object):
             return
         else:
             return True
-        
 
+# 追逐函数
+def chase(a, b):
+    if b is hero:
+        ang = random.randint(-40, 40) + a.angle_to(b)
+        a.speed_x = STANDARD_SPEED **1.5 * math.cos(math.radians(ang)) * a.speed_rate
+        a.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(ang)) * a.speed_rate
+    else: 
+        if b != None:
+            a.angle = a.angle_to(b)
+            ang = a.angle_to(b)
+            a.speed_x = STANDARD_SPEED **1.5 * math.cos(math.radians(ang)) * a.speed_rate
+            a.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(ang)) * a.speed_rate
+    a.x += a.speed_x
+    a.y += a.speed_y   
+
+################宝箱部分##################
+# 箱子部分
+n = int(dic['BOX_NUM_LEVEL1'])
+boxes = []
+
+class Box(Actor):
+
+    def __init__(self, type, pos):
+        super().__init__('box_close')
+        self.type = type
+        self.pos = pos
+        self.open = False
+
+    def open_box(self):
+        global  coins
+        self.image = 'box_open'
+        self.open = True
+        if self.type == 1:
+            mon = Monster(*ls_monster[1])
+            mon.pos = self.pos
+            monsters.append(mon)
+        elif self.type == 2:
+            mon = Monster(*ls_monster[2])
+            mon.pos = self.pos
+            monsters.append(mon)
+        elif self.type == 3:
+            mon = Monster(*ls_monster[3])
+            mon.pos = self.pos
+            monsters.append(mon)
+        elif self.type == 4 or self.type == 5:
+            self.image = 'golden_coin'
+            number = random.randint(20, 30)
+            coins += number
+        clock.schedule(self.remove_self, 1)
+
+    def remove_self(self):
+        boxes.remove(self)
+
+###################流程控制部分######################
+
+# 流程控制变量
+game = False
+step = 99
+level = 1
+no_boss = True
+
+# 地图与背景
+surface = Actor('purifier1')
+background1 = Actor("bg1")
+background1.topleft = 0, 0
+WIDTH = background1.width 
+HEIGHT = background1.height 
+
+# 传送门属性
+send = Actor('传送门')
+pos = [(1000, 400), (1000, 400), (600, 300), (600, 300)]
+    
+# 构造关卡函数
+def construct_level():
+    global n
+    if level == 1:
+        send.pos = pos[0][0], pos[0][1]
+        background1.image = 'bg1'
+        n = int(dic['BOX_NUM_LEVEL1'])     
+        for i in range(n):
+            x = random.randint(100, 1100)
+            y = random.randint(50, 430)
+            type = random.randint(1, 5)
+            boxes.append(Box(type, (x, y))) 
+
+    elif level == 2:
+        send.pos = pos[1][0], pos[1][1]
+        background1.image = 'bg2'
+        n = int(dic['BOX_NUM_LEVEL2'])
+        for i in range(n):
+            x = random.randint(100, 800)
+            y = random.randint(150, 430)
+            type = random.randint(1, 5)
+            boxes.append(Box(type, (x, y)))
+        x = random.randint(400, 800)
+        y = random.randint(150, 280)
+        mon = Minotaur(*ls_monster[4])
+        mon.land_center = x, y
+        mon.pos = mon.land_center[0] + mon.land_radius, mon.land_center[1]
+        monsters.append(mon)    
+
+    elif level == 3:
+        send.pos = pos[2][0], pos[2][1]
+        background1.image = 'bg3'
+        for i in range(n):
+            x = random.randint(100, 800)
+            y = random.randint(150, 430)
+            type = random.randint(1, 5)
+            boxes.append(Box(type, (x, y))) 
+            x1 = random.randint(400, 600)
+            y1 = random.randint(150, 210)
+            x2 = random.randint(600, 800)
+            y2 = random.randint(210, 280)
+            minotaur_pos = [(x1, y1), (x2, y2)]
+        for i in range(2):
+            mon = Minotaur(*ls_monster[4])
+            mon.land_center = minotaur_pos[i]
+            mon.pos = mon.land_center[0] + mon.land_radius, mon.land_center[1]
+            monsters.append(mon)  
+
+    elif level == 4:
+        global no_boss, boss
+        boss = Boss()
+        no_boss = False
+        send.pos = pos[3][0], pos[3][1]
+        background1.image = 'final'
+        background1.topleft = 0, 0
+
+    elif level == 5:  
+        endgamemode()
+
+####################玩家控制部分##################
+# 玩家属性
+hero = Actor("prince")
+hero.bottomleft = 0, HEIGHT
+hero_HP = HP(float(dic['HP']), int(dic['LIFE']))  #初始化王子HP
+full_MP = float(dic['MP'])
+current_MP = full_MP
+HERO_SPEED = float(dic['HERO_SPEED'])
+HERO_SPEED_DICT = {4:(HERO_SPEED, 0), 5:(-HERO_SPEED, 0), 6:(0, -HERO_SPEED), 7:(0, HERO_SPEED)}
+MP_RECOVERY_SPEED = float(dic['MP_RECOVERY_SPEED']) #每次刷新的MP恢复量
+
+### 上下左右行走模块函数 ###
+def left_movement():
+    hero.image = f"prince_left_{current_weapon.image}{animate_image_count}"
+def right_movement():
+    hero.image = f"prince_right_{current_weapon.image}{animate_image_count}"
+def up_movement():
+    hero.image = "prince_back"
+def down_movement():
+    hero.image = f"prince_{current_weapon.image}"
+
+
+#################怪兽部分#################
+monsters = []
+boss = None
+
+        
 class Monster(Actor):
     # 参数传入亦可改写为args，更简洁美观，不过可读性下降
     def __init__(self, image, full_HP, attack_distance,attack_damage,clash_damage,speed_rate,
                 bullet_image,bullet_speed_rate,autochase_distance):
         super().__init__(image)
-        self.list = []
         self.HP = HP(float(full_HP), 1) # 血量类
         self.HP_bar = Rect((0, 0), (28, 5)) # 满血条
         self.currentHP_bar = Rect((0, 0), (28, 5)) # 血条
@@ -62,11 +221,7 @@ class Monster(Actor):
         self.clash_damage = float(clash_damage) # 接触伤害
         self.autochase_distance = float(autochase_distance) # 自动追逐距离
         self.bullet_speed_rate = float(bullet_speed_rate) # 发射攻击速度
-        self.mode = 1
 
-    # 怪兽在被击退后重获速度
-    def recover(self):
-        self.beaten = False
     
     def attack(self):
         b = Bullet(self.bullet_image,self.attack_distance, self.attack_damage, 
@@ -74,25 +229,24 @@ class Monster(Actor):
         b.pos = self.pos
         monster_bullets.append(b)
         
-    # 每次uodate时更新怪兽的状态
     def move(self):
         self.HP_bar.topleft = self.x - 11, self.y - 18
         self.currentHP_bar.width = 28 * self.HP.current_HP / self.HP.full_HP
         self.currentHP_bar.topleft = self.x - 11, self.y - 18
-        # 靠近至一定距离时怪兽主动接近
         if not self.beaten:
+            # 靠近至一定距离时怪兽主动接近
             if self.distance_to(hero) < self.autochase_distance:
                 chase(self, hero)         
             else:
                 #平均2s一次的随机转向
                 if random.randint(1, 120) == 1:
-                    #ang = random.randint(-180, 180)
-                    ang = random.randint(0, 360)#choice([0, 45, 90, 135, 180, 225, 270, 315])
+                    ang = random.randint(0, 360)
                     self.speed_x = STANDARD_SPEED ** 1.5 * math.cos(math.radians(ang)) * self.speed_rate
                     self.speed_x = -STANDARD_SPEED ** 1.5 * math.sin(math.radians(ang)) * self.speed_rate
                 self.x += self.speed_x
                 self.y += self.speed_y
 
+        # 触壁反弹
         if WIDTH <= self.x or self.x <= 0:
             self.speed_x *= -1
         if HEIGHT <= self.y or self.y <= 0:
@@ -110,6 +264,9 @@ class Monster(Actor):
     def shake3(self):
         animate(self, duration = 0.1, angle = 0)
 
+    # 怪兽在被击退后重获速度
+    def recover(self):
+        self.beaten = False
     # 从迟缓状态恢复
     def reset_speed_rate(self):
         self.speed_rate /= 0.5
@@ -121,7 +278,6 @@ class Minotaur(Monster):
             bullet_image,bullet_speed_rate,autochase_distance)
         self.land_center = 0,0
         self.land_radius = 150
-        self.mod1e = 1
         self.HP_bar = Rect((0, 0), (63, 10)) # 满血条
         self.currentHP_bar = Rect((0, 0), (63, 10)) # 血条
 
@@ -134,6 +290,7 @@ class Minotaur(Monster):
             if self.distance_to(hero) < self.autochase_distance:
                 chase(self, hero)         
             else:
+                # 限制牛头人在近似圆周上运动
                 if self.distance_to(self.land_center) > self.land_radius + 20:
                     ang = self.angle_to(self.land_center)
                 elif self.distance_to(self.land_center) < self.land_radius - 20:
@@ -156,8 +313,8 @@ class Boss(Actor):
         super().__init__('boss')
         self.image = 'boss'
         self.midtop = 983.5, 164
-        self.pos1 = (WIDTH - 395, 265)
-        self.pos2 = (WIDTH - 401, 389) 
+        self.pos1 = (WIDTH - 530, 265)#395
+        self.pos2 = (WIDTH - 600, 389) #401
         self.HP = HP(200, 1)
         self.timer = 0
         self.magic = Actor('magic')
@@ -165,6 +322,17 @@ class Boss(Actor):
         self.delta = 0
         self.first_attach = True
 
+    # boss攻击
+    def boss_attack(self):
+        seed = random.randint(1, 7)
+        if seed == 1:
+            self.attack1()
+        elif seed in [2, 3]:
+            self.attack2()
+        elif seed in [4, 5]:
+            self.attack3()
+        elif seed in [6, 7]:
+            self.call()
 
     # 冲撞
     def attack1(self):
@@ -191,8 +359,6 @@ class Boss(Actor):
         self.image = 'boss'
         self.y -= self.delta
 
-
-    
     # 散射
     def attack2(self):
         for i in range(3):
@@ -233,6 +399,24 @@ class Boss(Actor):
         type = random.randint(1, 5)
         boxes.append(Box(type, (x, y))) 
 
+##################攻击系统部分#################
+# 武器模块
+
+# 挥舞动画
+animate_image_count = ''
+def animate_chop():
+    global animate_image_count
+    animate_image_count += 1
+    if animate_image_count > 3:
+        clock.unschedule(animate_chop)
+        animate_image_count = ''
+
+# 切换武器
+def on_key_up(key):
+    global current_weapon_id, current_weapon
+    if key == keys.Q:
+        current_weapon_id = (1 + current_weapon_id) % 2
+        current_weapon = weapons_on_bar[current_weapon_id]
 
 class Weapon(Actor):
     def __init__(self, image,type,distance,damage,price,MP_consuming,bullet_image,speed_rate,Note):
@@ -279,7 +463,8 @@ class Weapon(Actor):
                             monsters.remove(monster)
                         monster.animate_shake()
                         monster.beaten = True
-            if LEVEL == 4:
+            # 对boss的特殊处理
+            if level == 4:
                 if step == 4 and boss.collidepoint(hero.x + self.distance, hero.y):
                     boss.HP.current_HP -= self.damage
                 elif step == 5 and boss.collidepoint(hero.x - self.distance, hero.y):
@@ -290,7 +475,7 @@ class Weapon(Actor):
                     boss.HP.current_HP -= self.damage
                 if boss.HP.isdead():
                     no_boss = True
-                    clock.unschedule(boss_attack) 
+                    clock.unschedule(boss.boss_attack) 
                 
         
         # 远程武器
@@ -313,61 +498,6 @@ class Weapon(Actor):
                     if  dis < mindis:
                         mindis = dis
                         b.target = monster
-
-class Bullet(Actor):
-    def __init__(self, image, distance, damage, speed_rate, ang):
-        super().__init__(image)
-        self.damage = damage
-        self.distance = distance
-        self.angle = ang
-        self.speed_x = STANDARD_SPEED ** 1.5 *math.cos(math.radians(ang)) * speed_rate
-        self.speed_y = -STANDARD_SPEED ** 1.5 *math.sin(math.radians(ang)) * speed_rate
-        self.count_time = 0 #计时工具
-        self.target = None # 长矛1的跟踪对象
-        self.speed_rate = speed_rate
-        self.trace = False
-
-class Box(Actor):
-
-    def __init__(self, type, pos):
-        super().__init__('box_close')
-        self.type = type
-        self.pos = pos
-        self.open = False
-
-    def open_box(self):
-        global  coins
-        self.image = 'box_open'
-        self.open = True
-        if self.type == 1:
-            mon = Monster(*ls_monster[1])
-            mon.pos = self.pos
-            monsters.append(mon)
-        elif self.type == 2:
-            mon = Monster(*ls_monster[2])
-            mon.pos = self.pos
-            monsters.append(mon)
-        elif self.type == 3:
-            mon = Monster(*ls_monster[3])
-            mon.pos = self.pos
-            monsters.append(mon)
-        elif self.type == 4 or self.type == 5:
-            self.image = 'golden_coin'
-            number = random.randint(20, 30)
-            coins += number
-        '''elif self.type == 6:
-            mon = Monster(*ls_monster[4])'''
-        clock.schedule(self.remove_self, 1)
-
-    def remove_self(self):
-        boxes.remove(self)
-    
-
-
-##################全局变量global##########################
-
-
-# 武器模块
 # 参数依次为 image, type, distance, damage, price, MP_consuming
 fuzi = Weapon(*ls[1])
 gong1 = Weapon(*ls[2])
@@ -388,28 +518,36 @@ qiang2.pos = (590,240)
 changmao1.pos = (630,240)
 changmao2.pos = (370,280)
 
-# 双方在空中的子弹
-bullets = []
-monster_bullets = []
+# 武器
+weapons = [fuzi, gong1, gong2, jian1, jian2, qiang1, qiang2, changmao1, changmao2]
 
-# 参战武器槽与参战武器控制
+# 武器栏与当前使用武器控制
 weapon_bar = Actor('weapon_bar')
 weapon_bar.pos = 320, 40
 weapons_on_bar = [fuzi, gong1]
 current_weapon_id = 0
 current_weapon = weapons_on_bar[current_weapon_id]
 
-# 背包
-bag = Actor('背包')
-bag.pos = 500,300
-bag_weapons = [fuzi, gong1] # 已经拥有的武器
-bag_open = False
 
-# 武器
-weapons = [fuzi, gong1, gong2, jian1, jian2, qiang1, qiang2, changmao1, changmao2]
+# 双方在空中的子弹
+bullets = []
+monster_bullets = []
 
-# 金币，商店页面控制
-coins = int(dic['coins'])
+class Bullet(Actor):
+    def __init__(self, image, distance, damage, speed_rate, ang):
+        super().__init__(image)
+        self.damage = damage
+        self.distance = distance
+        self.angle = ang
+        self.speed_x = STANDARD_SPEED ** 1.5 *math.cos(math.radians(ang)) * speed_rate
+        self.speed_y = -STANDARD_SPEED ** 1.5 *math.sin(math.radians(ang)) * speed_rate
+        self.count_time = 0 #计时工具
+        self.target = None # 长矛1的跟踪对象
+        self.speed_rate = speed_rate
+        self.trace = False
+
+##############商店与背包系统#####################
+# 商店页面控制
 step_store = 0
 step_store1 = 0
 
@@ -418,105 +556,11 @@ store_button = Actor("store_button")
 store_inner = Actor("store")
 Pur_button = Actor("purchase")
 
-# 标准速度
-STANDARD_SPEED = float(dic['STANDARD_SPEED'])
-
-# 地图与背景
-background1 = Actor("bg1")  # 896, 448
-background1.topleft = 0, 0#background1.pos = 500, 300
-WIDTH = background1.width #+ 100
-HEIGHT = background1.height #+ 300
-
-# 在场角色
-hero = Actor("prince")
-hero.bottomleft = 0, HEIGHT
-hero_HP = HP(float(dic['HP']), int(dic['LIFE']))  #初始化王子HP
-full_MP = float(dic['MP'])
-current_MP = full_MP
-HERO_SPEED = float(dic['HERO_SPEED'])
-HERO_SPEED_DICT = {4:(HERO_SPEED, 0), 5:(-HERO_SPEED, 0), 6:(0, -HERO_SPEED), 7:(0, HERO_SPEED)}
-MP_RECOVERY_SPEED = float(dic['MP_RECOVERY_SPEED']) #每次刷新的MP恢复量
-monsters = []
-send = Actor('传送门')
-boss = Boss()
-
-# 游戏控制
-isLoose = False
-game = False
-step = 99
-Total = 3
-LEVEL = 4
-no_boss = True
-End = False
-a = ''
-
-# 箱子部分
-n = int(dic['BOX_NUM_LEVEL1'])
-boxes = []
-#background1 = Actor('bg1')
-#send.bottomright = 1200, 450#send.pos = 700, 500
-
-################各类函数##############################
-# 追逐函数
-def chase(a, b):
-    if b is hero:
-        ang = random.randint(-40, 40) + a.angle_to(b)
-        a.speed_x = STANDARD_SPEED **1.5 * math.cos(math.radians(ang)) * a.speed_rate
-        a.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(ang)) * a.speed_rate
-    else: 
-        if b != None:
-            a.angle = a.angle_to(b)
-            ang = a.angle_to(b)
-            a.speed_x = STANDARD_SPEED **1.5 * math.cos(math.radians(ang)) * a.speed_rate
-            a.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(ang)) * a.speed_rate
-    a.x += a.speed_x
-    a.y += a.speed_y   
-
-# 近战动画
-animate_image_count = ''
-def animate_chop():
-    global animate_image_count
-    animate_image_count += 1
-    if animate_image_count > 3:
-        clock.unschedule(animate_chop)
-        animate_image_count = ''
-
-# 画血条和蓝条
-def draw_status_bar():
-    global step
-    if (hero_HP.isdead()):
-        step = 2
-    currentHP_bar = Rect(
-        (27, 26), (235 * hero_HP.current_HP / hero_HP.full_HP, 13))  #当前血量
-    screen.blit('status_bar', (20, 20))
-    screen.draw.filled_rect(currentHP_bar, 'red')
-
-    currentMP_bar = Rect(
-        (27, 54), (235 * current_MP / full_MP, 13))  #当前血量
-    screen.blit('status_bar', (20, 48))
-    screen.draw.filled_rect(currentMP_bar, 'blue')
-
-# 画金币
-def draw_coins_bar():
-    screen.blit('golden_coin', (20, 80))  #20,60
-    screen.draw.text(str(coins), (125, 97), fontsize=50, color = 'gold')  #125 77
-
-
-### 上下左右行走模块函数 ###
-def left_movement():
-    hero.image = f"prince_left_{current_weapon.image}{animate_image_count}"
-
-
-def right_movement():
-    hero.image = f"prince_right_{current_weapon.image}{animate_image_count}"
-
-
-def up_movement():
-    hero.image = "prince_back"
-
-
-def down_movement():
-    hero.image = f"prince_{current_weapon.image}"
+# 背包
+bag = Actor('背包')
+bag.pos = 500,300
+bag_weapons = [fuzi, gong1] # 已经拥有的武器
+bag_open = False
 
 # 商店的购买判断
 def purchase_judge(n):
@@ -533,163 +577,49 @@ def purchase_judge(n):
         current_weapon_id = (current_weapon_id+1)%2
         current_weapon = weapons_on_bar[current_weapon_id]
         step_store = 1
-
 # 用于clock.schedule调用，清除金钱不够的信息
 def reset_step_store1():
     global step_store1
     step_store1 = 0
-# boss攻击
-def boss_attack():
-    seed = random.randint(1, 7)
-    if seed == 1:
-        boss.attack1()
-    elif seed in [2, 3]:
-        boss.attack2()
-    elif seed in [4, 5]:
-        boss.attack3()
-    elif seed in [6, 7]:
-        boss.call()
-
-# 构造关卡函数
-def construct_level():
-    global n
-    if LEVEL == 1:
-        send.pos = pos[0][0], pos[0][1]
-        background1.image = 'bg1'
-        n = int(dic['BOX_NUM_LEVEL1'])     
-        for i in range(n):
-            x = random.randint(100, 1100)
-            y = random.randint(50, 430)
-            type = random.randint(1, 5)
-            boxes.append(Box(type, (x, y))) 
-
-    elif LEVEL == 2:
-        send.pos = pos[1][0], pos[1][1]
-        background1.image = 'bg2'
-        n = int(dic['BOX_NUM_LEVEL2'])
-        for i in range(n):
-            x = random.randint(100, 800)
-            y = random.randint(150, 430)
-            type = random.randint(1, 5)
-            boxes.append(Box(type, (x, y)))
-        x = random.randint(400, 800)
-        y = random.randint(150, 280)
-        mon = Minotaur(*ls_monster[4])
-        mon.land_center = x, y
-        mon.pos = mon.land_center[0] + mon.land_radius, mon.land_center[1]
-        monsters.append(mon)    
-
-    elif LEVEL == 3:
-        send.pos = pos[2][0], pos[2][1]
-        background1.image = 'bg3'
-        for i in range(n):
-            x = random.randint(100, 800)
-            y = random.randint(150, 430)
-            type = random.randint(1, 5)
-            boxes.append(Box(type, (x, y))) 
-            x1 = random.randint(400, 600)
-            y1 = random.randint(150, 210)
-            x2 = random.randint(600, 800)
-            y2 = random.randint(210, 280)
-            minotaur_pos = [(x1, y1), (x2, y2)]
-        for i in range(2):
-            mon = Minotaur(*ls_monster[4])
-            mon.land_center = minotaur_pos[i]
-            mon.pos = mon.land_center[0] + mon.land_radius, mon.land_center[1]
-            monsters.append(mon)  
-
-    elif LEVEL == 4:
-        send.pos = pos[3][0], pos[3][1]
-        background1.image = 'final'
-        background1.topleft = 0, 0
-        global no_boss
-        no_boss = False
-
-    elif LEVEL == 5:  
-        endgamemode()
-construct_level()
-
-############按键与鼠标#########################
-
-def on_mouse_down(pos, button):
-    global coins
-    global step_store, bag_open, current_weapon, current_weapon_id, weapons_on_bar
-    if button == mouse.RIGHT:
-        if step_store in range(2, 11):
-            step_store = 1 #返回商店初始界面
-        else:
-            step_store = 12 #退出商店
-            current_weapon_id = 0
-        if bag_open:
-            bag_open = False
-            current_weapon_id = 0
-    else:
-        if weapon_bar.collidepoint(pos):
-            bag_open = True
-        if store_button.collidepoint(pos):
-            step_store = 1
-        else:
-            if not step_store in range(1, 11) and not bag_open:# 即未在商店和背包
-                current_weapon.attack(pos)
-            else:
-                global weapons
-                count = 2 #标识第几个武器
-                for i in weapons:
-                    if i.collidepoint(pos):
-                        if i in bag_weapons:
-                            weapons_on_bar[current_weapon_id] = i
-                            current_weapon_id = (current_weapon_id+1)%2
-                            current_weapon = weapons_on_bar[current_weapon_id]
-                        else:
-                            step_store = count
-                    count += 1
-                if Pur_button.collidepoint(pos) and not bag_open:
-                    purchase_judge(step_store)
-
-def on_key_down(key):
-    global step
-    step = 0
-    if key == keys.K_1:
-        step = 1
-        #gamemode()
-    elif key == keys.K_2:
-        FM.close()
-        FW.close()
-        FG.close()
-        exit()
-    elif key == keys.K_3:
-        tutorial()
 
 
-#### 切换武器
-def on_key_up(key):
-    global current_weapon_id, current_weapon
-    if key == keys.Q:
-        current_weapon_id = (1 + current_weapon_id) % 2
-        current_weapon = weapons_on_bar[current_weapon_id]
-
-
-######开始的矩形函数#######
+###############绘制输出部分###################
+# 开始的矩形函数
 def actionbar():
     ActionBar1 = Rect((210, 476), (1100, 80))
     ActionBar2 = Rect((210, 650), (920, 80))
-    #ActionBar3 = Rect((210, 300), (900, 80))
     screen.draw.filled_rect(ActionBar1, color=(0,0,0))
     screen.draw.filled_rect(ActionBar2, color=(0,0,0))
 
-############################
+# 画血条和蓝条
+def draw_status_bar():
+    global step
+    if (hero_HP.isdead()):
+        step = 2
+    currentHP_bar = Rect(
+        (27, 26), (235 * hero_HP.current_HP / hero_HP.full_HP, 13))  #当前血量
+    screen.blit('status_bar', (20, 20))
+    screen.draw.filled_rect(currentHP_bar, 'red')
 
-########################draw函数###########################
+    currentMP_bar = Rect(
+        (27, 54), (235 * current_MP / full_MP, 13))  #当前MP
+    screen.blit('status_bar', (20, 48))
+    screen.draw.filled_rect(currentMP_bar, 'blue')
 
+# 画金币
+def draw_coins_bar():
+    screen.blit('golden_coin', (20, 80))  #20,60
+    screen.draw.text(str(coins), (125, 97), fontsize=50, color = 'gold')  
 
 def draw():
-    global step, isLoose, game, WIDTH, HEIGHT, LEVEL
+    global step, game, WIDTH, HEIGHT, level
     screen.fill('deepskyblue')
     if step != 1 and step != 2:
         WIDTH = surface.width
         HEIGHT = surface.height
         surface.draw()
         actionbar()
+        # 开始界面绘制
         screen.draw.text(" Welcome to the Game of Purifier\n\n\n"
                          " Press Number 1 to start the new game\n\n\n"
                          " Press Number 2 to exit the game\n\n", (200, 310), fontname='09', fontsize=60, color=(195,44,2))
@@ -703,7 +633,6 @@ def draw():
         screen.fill('white')
         background1.draw()
         hero.draw()
-       #screen.draw.text("Press Number 2 to exit the game", (800, 20), fontsize=25, color='orange')
         for monster in monsters:
             monster.draw()
             screen.draw.filled_rect(monster.HP_bar, 'gray')
@@ -711,7 +640,6 @@ def draw():
 
 
         if step == 2:
-            isLoose = True
             screen.clear()
             screen.fill('white')
             screen.draw.text("You have lost your game, please exit!", (300, 300), fontsize=50, color="orange")
@@ -750,7 +678,7 @@ def draw():
         if len(boxes) == 0 and len(monsters) == 0 and no_boss:
             send.draw()
             if hero.colliderect(send):
-                LEVEL += 1
+                level += 1
                 construct_level()
         for box in boxes:
             box.draw()
@@ -762,7 +690,7 @@ def draw():
         # 商店图标
         store_button.draw()
 
-        if LEVEL == 4 and not no_boss:
+        if level == 4 and not no_boss:
             boss.draw()
             boss_currentHP_bar = Rect(
                 (787, 26), (235 * boss.HP.current_HP / boss.HP.full_HP, 13))  #当前血量
@@ -814,7 +742,8 @@ def draw():
         qiang2.pos = (590,240)
         changmao1.pos = (630,240)
         changmao2.pos = (370,280)
-    #购买点击图标
+
+    #购买界面图标位置
     x0,y0 = 400,150
     x1,y1 = 400,200
     x2,y2 = 500,300
@@ -829,8 +758,60 @@ def draw():
         screen.draw.text("Your coins are not ENOUGH!",(300,400),fontsize=50,color = "red")
 
 
-    ####################update函数#################################
+#############信息采集与决策部分##############
 
+# 基于输入的决策
+def on_mouse_down(pos, button):
+    global coins
+    global step_store, bag_open, current_weapon, current_weapon_id, weapons_on_bar
+    if button == mouse.RIGHT:
+        if step_store in range(2, 11):
+            step_store = 1 #返回商店初始界面
+        else:
+            step_store = 12 #退出商店
+            current_weapon_id = 0
+        if bag_open:
+            bag_open = False
+            current_weapon_id = 0
+    else:
+        if weapon_bar.collidepoint(pos):
+            bag_open = True
+        if store_button.collidepoint(pos):
+            step_store = 1
+        else:
+            if not step_store in range(1, 11) and not bag_open:# 即未在商店和背包
+                current_weapon.attack(pos)
+            else:
+                global weapons
+                count = 2 #标识第几个武器
+                for i in weapons:
+                    if i.collidepoint(pos):
+                        if i in bag_weapons:
+                            weapons_on_bar[current_weapon_id] = i
+                            current_weapon_id = (current_weapon_id+1)%2
+                            current_weapon = weapons_on_bar[current_weapon_id]
+                        else:
+                            step_store = count
+                    count += 1
+                if Pur_button.collidepoint(pos) and not bag_open:
+                    purchase_judge(step_store)
+
+def on_key_down(key):
+    global step
+    step = 0
+    if key == keys.K_1:
+        step = 1
+        gamemode()
+        construct_level()       
+    elif key == keys.K_2:
+        FM.close()
+        FW.close()
+        FG.close()
+        exit()
+    elif key == keys.K_3:
+        tutorial()
+
+# 基于当前信息的决策
 def update():
     global step, hero, game, current_MP, current_weapon, boxes, no_boss
     if game:
@@ -858,9 +839,9 @@ def update():
         current_weapon = weapons_on_bar[current_weapon_id]
         if current_MP < full_MP:
             current_MP += MP_RECOVERY_SPEED
-        if LEVEL == 4 and not no_boss:
+        if level == 4 and not no_boss:
             if boss.first_attach and boss.HP.current_HP < boss.HP.full_HP:
-                clock.schedule_interval(boss_attack, 2)
+                clock.schedule_interval(boss.boss_attack, 2)
                 boss.first_attach = False
             # 自动追踪弹
             if not boss.first_attach and hero.distance_to(boss.center) < 400 and boss.timer == 0:
@@ -871,7 +852,9 @@ def update():
                 monster_bullets.append(b)
             boss.timer = (boss.timer + 1) % 30
 
-        #####子弹更新模块#####
+        # 子弹更新模块
+
+        # 我方子弹
         for i in bullets:
             if WIDTH <= i.x or i.x <= 0 or HEIGHT <= i.y or i.y <= 0:
                 if i in bullets:
@@ -896,20 +879,16 @@ def update():
                     monster.animate_shake()
                 if monster.HP.isdead():
                     monsters.remove(monster)
-            if LEVEL == 4 and not no_boss:
+            if level == 4 and not no_boss:
                 if boss.colliderect(i):
                     boss.HP.current_HP -= i.damage
                     if i.image != '长矛2_bullet' and i in bullets: 
                         bullets.remove(i)
                 if boss.HP.isdead():
                     no_boss = True
-                    clock.unschedule(boss_attack)     
-            '''
-            elif i.special == 2:
-                ang = math.arctan(math.sin(811-i.x)) + 180
-                i.speed_x = STANDARD_SPEED **1.5 * math.cos(math.radians(ang) * i.speed_rate
-                i.speed_y = -STANDARD_SPEED**1.5 * math.sin(math.radians(ang) * i.speed_rate
-            '''        
+                    clock.unschedule(boss.boss_attack)
+
+        # 敌方子弹                   
         for i in monster_bullets:
             if WIDTH <= i.x or i.x <= 0 or HEIGHT <= i.y or i.y <= 0:
                 if i in monster_bullets:
@@ -929,32 +908,36 @@ def update():
                 hero_HP.current_HP -= i.damage
                 if i in monster_bullets:
                     monster_bullets.remove(i)
+
+        # 碰撞伤害
+        for monster in monsters:
+            if hero.colliderect(monster):
+                tone.play('G2', 0.1)
+                hero_HP.current_HP -= monster.clash_damage
+        if not no_boss and hero.colliderect(boss):
+                tone.play('G2', 0.1)
+                hero_HP.current_HP -= 0.1
         
         for monster in monsters:
             # 在一定距离内怪兽使用火球术 ~
             if monster.distance_to(hero) < 200 and random.randint(1, 120) == 1:
                 monster.attack()
-            # 怪兽的状态更新
+            # 怪兽的移动
             monster.move()
 
-        # 画箱子
+        # 开箱子
         for box in boxes:
             if hero.colliderect(box) and box.open == False:
                 box.open_box()
 
 
-    #### 碰撞伤害 ######
-    for monster in monsters:
-        if hero.colliderect(monster):
-            tone.play('G2', 0.1)
-            hero_HP.current_HP -= monster.clash_damage
-    if not no_boss and hero.colliderect(boss):
-            #tone.play('G2', 0.1)
-            hero_HP.current_HP -= 0.1
 
 
 
-######游戏开始对白界面##########
+#############对白部分##########
+your_name = ''
+
+# 开场对白
 def gamemode():
     global step, game
     while not game:
@@ -989,18 +972,15 @@ def gamemode():
 
         # 选择
         if g.ccbox('请做出决定', '', choices=('跟他去一探究竟', '不去不去，他是个大骗子')):
-            global a
-            a = g.enterbox(msg="请输入你的名字", title="勇士的名字")
+            global your_name
+            your_name = g.enterbox(msg="请输入你的名字", title="勇士的名字")
             tutorial()
             return
         # 退出程序
         else:
             sys.exit(0)
 
-
-###########################################
-
-################结束游戏对白################
+# 结束对白
 def endgamemode():
     global step
     g.msgbox('恭喜您，打败恶龙昆图库塔卡提考特苏瓦西拉松\n\n'
@@ -1033,8 +1013,8 @@ def endgamemode():
 
     # 选择
     if g.ccbox('请做出选择', '', choices=('不管了，再来一局', '退出游戏，滚去学习')):
-        global LEVEL, hero_HP,hero, HEIGHT, full_MP, current_MP, background1, coins
-        LEVEL = 1
+        global level, hero_HP,hero, HEIGHT, full_MP, current_MP, background1, coins
+        level = 1
         construct_level()
         hero_HP = HP(float(dic['HP']), int(dic['LIFE']))  #初始化王子HP
         current_MP = full_MP
@@ -1048,9 +1028,9 @@ def endgamemode():
         sys.exit(0)
 
 
-############操作介绍#########
+# 操作介绍
 def tutorial():
-    global step, a
+    global step, your_name
     g.msgbox(msg="单击鼠标左键进行攻击\n\n"
                     "按 Q 键实现左上角武器栏中的武器切换\n\n"
                     "当你使用斧头，剑等近程武器时，攻击方向为当前角色的朝向\n"
@@ -1059,8 +1039,8 @@ def tutorial():
                     "点击右上角的商店图标以购买武器，点击左上角的武器栏可以进入背包以更换武器，鼠标右键返回上一层\n\n"
                     "当你碰到宝箱时它会自动打开，在打开所有宝箱并消灭所有怪物时传送门就会出现，通过传送门进入下一关\n\n"
                     "游戏中按下数字键3可以再次查看操作介绍\n\n"
-                    f"{a}你准备好去寻找解药，拯救王国了吗？快开始你的冒险吧！\n",title='操作介绍',  ok_button='冲啊')
-    if g.ccbox('闯关之前'f'{a}，你懂得如何正确杀敌了嘛', '', choices=('等等我还没搞懂?', '我准备好冒险了!')):
+                    f"{your_name}你准备好去寻找解药，拯救王国了吗？快开始你的冒险吧！\n",title='操作介绍',  ok_button='冲啊')
+    if g.ccbox('闯关之前'f'{your_name}，你懂得如何正确杀敌了嘛', '', choices=('等等我还没搞懂?', '我准备好冒险了!')):
         tutorial()
     else:
         return
