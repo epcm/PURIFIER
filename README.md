@@ -82,9 +82,9 @@
 | :----------: | :----------------------------------: | :----------------------------------------------------------: |
 | 召唤师的技艺 |  召唤1个宝箱并有可能附送一个牛头怪   |                              \                               |
 |    Magic!    | 对定位在玩家的魔法阵内进行流星雨攻击 | <img src="https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/magic!.png" style="zoom:50%;" /> |
-|     冲撞     |  在某一垂直位置上进行快速的前后冲撞  | <img src="https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/20200711221643.png" style="zoom: 12%;" /> |
-|     散弹     |           同时发出6个火球            | <img src="https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/20200711222331.png" style="zoom: 15%;" /> |
-|  自卫追踪弹  |    在靠近时会自动发射能追踪的火球    | <img src="https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/auto_chase.jpg" style="zoom: 15%;" /> |
+|     冲撞     |  在某一垂直位置上进行快速的前后冲撞  | <img src="https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/20200711221643.png" style="zoom: 25%;" /> |
+|     散弹     |           同时发出6个火球            | <img src="https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/20200711222331.png" style="zoom: 33%;" /> |
+|  自卫追踪弹  |    在靠近时会自动发射能追踪的火球    | <img src="https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/auto_chase.jpg" style="zoom: 33%;" /> |
 
 #### 来自开发者的通关小建议
 
