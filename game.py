@@ -39,6 +39,8 @@ class HP(object):
             return
         elif self.current_HP <= 0 and self.count < self.num:  # 能复活
             self.current_HP = self.full_HP
+            global current_MP
+            current_MP = full_MP
             self.count += 1
             hero.bottomleft = (0, HEIGHT)
             return
@@ -149,6 +151,7 @@ def construct_level():
     elif level == 3:
         send.pos = pos[2][0], pos[2][1]
         background1.image = 'bg3'
+        n = int(dic['BOX_NUM_LEVEL3'])
         for i in range(n):
             x = random.randint(100, 800)
             y = random.randint(150, 430)
@@ -1022,7 +1025,6 @@ def endgamemode():
         background1.topleft = 0, 0
         hero.bottomleft = 0, HEIGHT
         coins = 0
-        #####有bug
     # 退出程序
     else:
         sys.exit(0)
