@@ -4,7 +4,7 @@
 
 这是2020年北京大学暑期学校python语言基础与应用16组的大作业，基于pygame zero开发。
 
-没有配置/不想配置相关环境的话请下载Releases中的exe版本（仅限windows），exe版本相关源码见For_EXE分支
+__没有配置/不想配置相关环境的话请下载Releases中的exe版本（仅限windows），exe版本相关源码见For_EXE分支__
 
 #### 故事背景
 
