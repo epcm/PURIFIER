@@ -60,7 +60,7 @@
 | ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/%E6%96%A7%E5%AD%90.png)斧子 |  0   |  2   |   10   |    60    | \        | 普通的斧子                         |
 | ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/%E5%BC%931.png)弓箭 |  0   | 1.5  |   10   |   200    | 1.5      | 普通的弓箭                         |
 | ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/%E5%BC%932.png)寒冰射手 |  30  | 1.5  |   15   |   200    | 1.5      | 使敌人一定时间内减速（对Boss无效） |
-| ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/%E5%89%911.png)细剑 |  30  |  4   |   15   |    75    | \        | 高伤害                             |
+| ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/%E5%89%911.png)细剑 |  30  |  5   |   15   |    75    | \        | 高伤害                             |
 | ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/%E5%89%912.png)大宝剑 |  30  |  3   |   15   |    75    | \        | 高击退效果                         |
 | ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/%E6%9E%AA1.png)散射枪 |  40  |  1   |   20   |   200    | 1.5      | 一次散射3发                        |
 | ![](https://raw.githubusercontent.com/epcm/Pictures/master/Markdown/%E6%9E%AA2.png)脉冲枪 |  40  |  3   |   20   |   200    | 2.5      | 高速高伤害                         |
