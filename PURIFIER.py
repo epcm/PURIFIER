@@ -1014,7 +1014,7 @@ def endgamemode():
         global level, hero_HP,hero, HEIGHT, full_MP, current_MP, background1, coins
         level = 1
         construct_level()
-        hero_HP = HP(10, 3)  #初始化王子HP
+        hero_HP = HP(100, 3)  #初始化王子HP
         current_MP = full_MP
         step = 1  # 进入游戏界面
         background1.bottomleft = 0, 0
