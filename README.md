@@ -6,6 +6,11 @@
 
 __没有配置/不想配置相关环境的话请下载Releases中的exe版本（仅限windows），exe版本相关源码见For_EXE分支__
 
+## 视频
+
+<iframe src="//player.bilibili.com/player.html?aid=926264811&bvid=BV1XT4y177eE&cid=212012705&page=16" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" height=600 
+width=800> </iframe>
+
 #### 故事背景
 
 公元2020年7月8日，王浩然正在电脑前敲着暑校typhon课程的大作业代码。他是b大的一名学生。由于这场新冠肺炎疫情，他迟迟不能返回学校，一不小心寒假连休到了暑假。
