@@ -8,8 +8,7 @@ __没有配置/不想配置相关环境的话请下载Releases中的exe版本（
 
 ## 视频
 
-<iframe src="//player.bilibili.com/player.html?aid=926264811&bvid=BV1XT4y177eE&cid=212012705&page=16" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" height=600 
-width=800> </iframe>
+https://www.bilibili.com/video/BV1XT4y177eE?p=16&share_source=copy_web
 
 #### 故事背景
 
